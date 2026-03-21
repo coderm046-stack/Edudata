@@ -1,400 +1,627 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ABC HIGH SCHOOL - Student Data Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1E3A8A">
+    <title>Student Data Master v1.0</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary:#1E3A8A; --secondary:#10B981; --bg:#DBEAFE; --error:#EF4444; --warning:#F59E0B; --white:#FFFFFF; }
+        * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        body { font-family:'Segoe UI',sans-serif; background-color:var(--bg); margin:0; padding:10px; }
+        header { width:100%; max-width:650px; background:var(--primary); color:white; padding:15px; border-radius:12px; text-align:center; margin:0 auto 15px auto; }
+        .card { background:var(--white); width:100%; max-width:650px; border-radius:15px; padding:20px; border:1px solid #BFDBFE; margin:0 auto 20px auto; }
+        .photo-container { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; gap:10px; }
+        #photo-preview { width:35mm; height:45mm; border:2px dashed #cbd5e1; background:#f8fafc; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px; text-align:center; font-size:0.7rem; }
+        #photo-preview img { width:100%; height:100%; object-fit:cover; }
+        .btn-photo { padding:8px 12px; font-size:0.8rem; background:#475569; border-radius:6px; color:white; border:none; cursor:pointer; }
+        .section-title { color:var(--primary); font-weight:800; border-bottom:2px solid #E5E7EB; margin:20px 0 10px 0; padding-bottom:5px; text-transform:uppercase; font-size:0.8rem; display:flex; align-items:center; gap:8px; }
+        .field-group { margin-bottom:10px; }
+        label { display:block; font-size:0.7rem; font-weight:700; margin-bottom:3px; color:#4B5563; }
+        input,select,textarea { width:100%; min-height:38px; padding:8px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:0.95rem; background:#F9FAFB; }
+        .up { text-transform:uppercase; }
+        .btn-stack { display:flex; flex-direction:column; gap:10px; margin-top:25px; }
+        button { width:100%; min-height:48px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .btn-add { background:var(--secondary); }
+        .btn-search { background:var(--primary); }
+        .btn-update { background:var(--warning); display:none; }
+        .btn-clear { background:var(--error); }
+        #searchModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; padding:15px; justify-content:center; align-items:flex-start; overflow-y:auto; }
+        .modal-content { background:white; border-radius:15px; padding:20px; width:100%; max-width:500px; margin-top:20px; }
+        .search-item { background:#f1f5f9; padding:12px; border-radius:8px; margin-bottom:10px; border-left:5px solid var(--primary); }
+        .version-tag { text-align:center; font-size:0.7rem; color:#64748b; margin:20px 0; }
+        #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 22px; border-radius:25px; color:white; display:none; z-index:10001; font-weight:bold; font-size:0.95rem; white-space:nowrap; }
+        .dashboard { display:flex; gap:10px; max-width:650px; margin:10px auto; }
+        .stat { flex:1; background:#fff; padding:12px; border-radius:10px; text-align:center; border:1px solid #BFDBFE; }
+        #studentForm { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        #studentForm .section-title { grid-column:1/-1; }
+        #studentForm .btn-stack { grid-column:1/-1; }
+        @media(max-width:650px){ #studentForm { grid-template-columns:1fr; } }
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+        /* ═══════════════════════════════════════════════
+           PRINT STYLES
+           KEY: Use "body > *:not(#printArea) { display:none }"
+           instead of visibility:hidden — this removes elements
+           from document flow so browser doesn't create blank pages.
+           Each student is one .print-page div (normal flow),
+           page-break-after:always handles pagination.
+        ═══════════════════════════════════════════════ */
+        #printArea { display:none; }
 
-<style>
+        @media print {
+            @page { size:A4 portrait; margin:0; }
 
-:root{
---primary:#1E3A8A;
---secondary:#10B981;
---danger:#EF4444;
---warning:#F59E0B;
---bg:#EFF6FF;
-}
+            /* Remove all siblings from flow — prevents blank pages */
+            body > *:not(#printArea) { display:none !important; }
 
-body{
-font-family:Segoe UI;
-background:var(--bg);
-margin:0;
-padding:20px;
-}
+            #printArea {
+                display:block !important;
+                width:210mm;
+                margin:0; padding:0;
+            }
 
-header{
-background:var(--primary);
-color:white;
-padding:20px;
-border-radius:12px;
-text-align:center;
-max-width:700px;
-margin:auto;
-box-shadow:0 5px 15px rgba(0,0,0,0.2);
-}
+            /* Each .print-page = exactly one A4 page */
+            .print-page {
+                width:210mm;
+                height:297mm;
+                box-sizing:border-box;
+                border:3px double #000;
+                padding:6mm 8mm;
+                display:flex !important;
+                flex-direction:column !important;
+                page-break-after:always;
+                page-break-inside:avoid;
+                overflow:hidden;
+                background:white;
+                font-family:'Segoe UI',sans-serif;
+            }
+            /* Last page: no trailing blank page */
+            .print-page:last-child { page-break-after:avoid; }
 
-header h1{
-margin:0;
-font-size:26px;
-}
+            /* Header */
+            .print-header {
+                display:flex !important;
+                justify-content:space-between !important;
+                align-items:flex-start !important;
+                border-bottom:2px solid #000;
+                padding-bottom:5px;
+                margin-bottom:5px;
+                flex-shrink:0 !important;
+            }
+            .print-header-text { display:block !important; flex:1 !important; padding-right:8px; }
+            .print-header-text h1 {
+                margin:0; font-size:15pt; letter-spacing:1px;
+                font-weight:900; line-height:1.2; text-transform:uppercase;
+                display:block !important;
+            }
+            .print-header-text p {
+                margin:5px 0 0 0; font-size:12pt; font-weight:800;
+                color:#1E3A8A; display:block !important;
+            }
+            .print-photo {
+                width:35mm; height:45mm; border:1px solid #000;
+                object-fit:cover; flex-shrink:0 !important; display:block !important;
+            }
+            .print-photo-placeholder {
+                width:35mm; height:45mm; border:1px solid #000;
+                flex-shrink:0 !important; display:flex !important;
+                align-items:center !important; justify-content:center !important;
+                font-size:7pt; text-align:center; color:#666; line-height:1.4;
+            }
 
-header p{
-margin:5px 0 0 0;
-opacity:0.9;
-}
+            /* Data grid fills remaining page height */
+            .print-grid {
+                display:grid !important;
+                grid-template-columns:repeat(3,1fr) !important;
+                gap:0 !important;
+                border-top:1px solid #000;
+                border-left:1px solid #000;
+                flex:1 !important;
+                align-content:stretch !important;
+                /* grid-template-rows set inline: repeat(N,1fr) */
+            }
+            .print-cell {
+                border-right:1px solid #000;
+                border-bottom:1px solid #000;
+                padding:3px 5px;
+                overflow:hidden;
+                display:flex !important;
+                flex-direction:column !important;
+                justify-content:center !important;
+            }
+            .print-label {
+                font-weight:700; font-size:7pt; text-transform:uppercase;
+                display:block !important; line-height:1.2; color:#444;
+                margin-bottom:1px;
+            }
+            .print-value {
+                font-size:10pt; display:block !important;
+                font-weight:600; line-height:1.3; word-break:break-word;
+            }
 
-.dashboard{
-display:flex;
-gap:10px;
-max-width:700px;
-margin:15px auto;
-}
-
-.stat{
-flex:1;
-background:white;
-padding:15px;
-border-radius:10px;
-text-align:center;
-box-shadow:0 5px 10px rgba(0,0,0,0.1);
-}
-
-.card{
-background:white;
-max-width:700px;
-margin:auto;
-padding:20px;
-border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-.section-title{
-font-weight:bold;
-margin-top:20px;
-color:var(--primary);
-border-bottom:2px solid #ddd;
-padding-bottom:5px;
-}
-
-.field-group{
-margin-bottom:10px;
-}
-
-input,select,textarea{
-width:100%;
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-}
-
-button{
-width:100%;
-padding:12px;
-margin-top:8px;
-border:none;
-border-radius:8px;
-color:white;
-font-weight:bold;
-cursor:pointer;
-transition:0.2s;
-}
-
-button:hover{
-transform:scale(1.02);
-}
-
-.btn-add{background:var(--secondary)}
-.btn-search{background:var(--primary)}
-.btn-clear{background:var(--danger)}
-
-.search-item{
-background:#f1f5f9;
-padding:12px;
-border-radius:8px;
-margin-bottom:10px;
-border-left:5px solid var(--primary);
-}
-
-#searchModal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.7);
-padding:20px;
-}
-
-.modal{
-background:white;
-max-width:500px;
-margin:auto;
-padding:20px;
-border-radius:12px;
-}
-
-</style>
+            /* Signature — in-flow at bottom */
+            .footer-sign {
+                flex-shrink:0 !important; display:block !important;
+                margin-top:5px; text-align:right;
+                font-weight:bold; font-size:10pt;
+                border-top:1.5px solid #000; padding-top:3px;
+            }
+        }
+    </style>
 </head>
-
 <body>
 
-<header>
-<h1>ABC HIGH SCHOOL</h1>
-<p>Student Data Portal</p>
-</header>
+<div id="main-content">
+    <header><h2>Student Portal v1.0</h2></header>
 
-<div class="dashboard">
+    <div class="dashboard">
+        <div class="stat"><h3 id="totalStudents">0</h3><p>Total Students</p></div>
+        <div class="stat"><h3 id="boys">0</h3><p>Boys</p></div>
+        <div class="stat"><h3 id="girls">0</h3><p>Girls</p></div>
+    </div>
 
-<div class="stat">
-<h3 id="totalStudents">0</h3>
-<p>Total Students</p>
+    <div class="card">
+        <div class="photo-container">
+            <div id="photo-preview"><span>3.5 x 4.5 cm Photo<br>Required</span></div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn-photo" onclick="document.getElementById('fileInput').click()">Gallery</button>
+                <button class="btn-photo" onclick="startCamera()">Camera</button>
+            </div>
+            <input type="file" id="fileInput" hidden accept="image/*" onchange="previewImage(event)">
+            <input type="hidden" id="photoBase64">
+        </div>
+
+        <form id="studentForm" onsubmit="return false;">
+            <input type="hidden" id="editID">
+
+            <div class="section-title">Academic Details</div>
+            <div class="field-group">
+                <label>CLASS</label>
+                <select id="CLASS" required>
+                    <option value="">Select</option>
+                    <option>IX</option><option>X</option><option>XI</option><option>XII</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>ACADEMIC YEAR</label>
+                <select id="ACADEMIC_YEAR">
+                    <option>2023-2024</option><option>2024-2025</option><option>2025-2026</option>
+                    <option>2026-2027</option><option>2027-2028</option><option>2028-2029</option>
+                    <option>2029-2030</option><option>2030-2031</option><option>2031-2032</option>
+                    <option>2032-2033</option><option>2033-2034</option><option>2034-2035</option>
+                    <option>2035-2036</option><option>2036-2037</option><option>2037-2038</option>
+                    <option>2038-2039</option><option>2039-2040</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>DIVISION</label>
+                <select id="DIVISION" required>
+                    <option value="">Select</option>
+                    <option>A</option><option>B</option><option>C</option><option>D</option>
+                </select>
+            </div>
+            <div class="field-group"><label>ROLL NO.</label><input type="number" id="ROLL_NO" required></div>
+            <div class="field-group"><label>GR NO.</label><input type="number" id="GR_NO" required></div>
+            <div class="field-group"><label>STUDENT NAME (L.C.)</label><input type="text" id="STUDENT_NAME" class="up" required></div>
+            <div class="field-group"><label>DATE OF ADMISSION</label><input type="date" id="DOA" required></div>
+            <div class="field-group"><label>PREV. SCHOOL NAME</label><input type="text" id="PREV_SCHOOL" class="up"></div>
+
+            <div class="section-title">Personal Details</div>
+            <div class="field-group"><label>GENDER</label><select id="GENDER" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+            <div class="field-group"><label>DATE OF BIRTH (L.C.)</label><input type="date" id="DOB_LC" required></div>
+            <div class="field-group"><label>PLACE OF BIRTH</label><input type="text" id="POB" class="up"></div>
+            <div class="field-group"><label>CASTE</label><input type="text" id="CASTE" class="up"></div>
+            <div class="field-group"><label>AADHAR NO.</label><input type="text" id="AADHAR_NO" pattern="[0-9]{12}" maxlength="12" inputmode="numeric" required></div>
+            <div class="field-group"><label>NAME ON AADHAR</label><input type="text" id="NAME_AADHAR" class="up"></div>
+            <div class="field-group"><label>DOB ON AADHAR</label><input type="date" id="DOB_AADHAR"></div>
+
+            <div class="section-title">Contact Details</div>
+            <div class="field-group"><label>FATHER NAME</label><input type="text" id="FATHER_NAME" class="up"></div>
+            <div class="field-group"><label>MOTHER NAME</label><input type="text" id="MOTHER_NAME" class="up"></div>
+            <div class="field-group"><label>MOBILE 1</label><input type="tel" id="MOBILE_1" pattern="[0-9]{10}" maxlength="10" inputmode="numeric" required></div>
+            <div class="field-group"><label>MOBILE 2</label><input type="tel" id="MOBILE_2" pattern="[0-9]{10}" maxlength="10" inputmode="numeric"></div>
+            <div class="field-group"><label>EMAIL ID</label><input type="email" id="EMAIL_ID"></div>
+            <div class="field-group"><label>ADDRESS</label><textarea id="ADDRESS" rows="2" class="up" required></textarea></div>
+
+            <div class="section-title">Govt &amp; Bank IDs</div>
+            <div class="field-group"><label>BANK ACC NO.</label><input type="text" id="BANK_ACC"></div>
+            <div class="field-group"><label>BANK NAME</label><input type="text" id="BANK_NAME" class="up"></div>
+            <div class="field-group"><label>IFSC CODE</label><input type="text" id="IFSC" class="up"></div>
+            <div class="field-group"><label>PEN NO.</label><input type="text" id="PEN" class="up"></div>
+            <div class="field-group"><label>APAAR ID</label><input type="text" id="APAAR" class="up"></div>
+
+            <div class="section-title">Medical &amp; Misc</div>
+            <div class="field-group">
+                <label>HOSTEL STUDENT</label>
+                <select id="HOSTEL_STUDENT"><option>No</option><option>Yes</option></select>
+            </div>
+            <div class="field-group"><label>BLOOD GROUP</label><select id="BLOOD_GROUP"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+            <div class="field-group"><label>HEIGHT (CM)</label><input type="number" id="HEIGHT"></div>
+            <div class="field-group"><label>WEIGHT (KG)</label><input type="number" id="WEIGHT"></div>
+            <div class="field-group"><label>LAST CLASS %</label><input type="number" id="PERCENTAGE" step="0.01"></div>
+            <div class="field-group"><label>DISTANCE (KM)</label><input type="number" id="DISTANCE" step="0.1"></div>
+            <div class="field-group"><label>HOSTEL?</label><select id="HOSTEL"><option>No</option><option>Yes</option></select></div>
+            <div class="field-group"><label>ORPHAN?</label><select id="ORPHAN"><option>No</option><option>Yes</option></select></div>
+            <div class="field-group"><label>APL/BPL</label><select id="APL_BPL"><option>APL</option><option>BPL</option></select></div>
+            <div class="field-group"><label>REMARK</label><textarea id="REMARK" rows="1" class="up"></textarea></div>
+
+            <div class="section-title">Vocational Info</div>
+            <div class="field-group">
+                <label>VOCATIONAL SUBJECT AT Xth?</label>
+                <select id="VOC_STATUS" onchange="toggleVoc(this.value)" required>
+                    <option value="No">No</option><option value="Yes">Yes</option>
+                </select>
+            </div>
+            <div class="field-group" id="vocBox" style="display:none;">
+                <label>NAME OF VOCATIONAL SUBJECT</label>
+                <input type="text" id="VOC_NAME" class="up" placeholder="Enter Subject Name">
+            </div>
+
+            <div class="btn-stack">
+                <button type="button" id="saveBtn"   class="btn-add"    onclick="handleSave()">💾 Save Record</button>
+                <button type="button" id="updateBtn" class="btn-update" onclick="handleUpdate()">✏️ Update Record</button>
+                <button type="button" class="btn-search" onclick="openSearch()">🔍 Search / Edit / Delete</button>
+                <button type="button" onclick="exportToExcel()" style="background:#065F46;">📤 Export to Excel</button>
+                <button type="button" onclick="importExcel()"   style="background:#0369A1;">📥 Import Excel</button>
+                <button type="button" onclick="printAll()"      style="background:#7C3AED;">🖨️ Print All Students</button>
+                <button type="button" class="btn-clear"         onclick="wipeDatabase()">🗑️ Wipe All Data</button>
+            </div>
+        </form>
+    </div>
+    <p class="version-tag">Version 1.0 | Formal Border | 35 Fields + Vocational</p>
 </div>
 
-<div class="stat">
-<h3 id="boys">0</h3>
-<p>Boys</p>
-</div>
+<!-- printArea: hidden normally, shown only during print -->
+<div id="printArea"></div>
 
-<div class="stat">
-<h3 id="girls">0</h3>
-<p>Girls</p>
-</div>
+<!-- Hidden file input for Import Excel -->
+<input type="file" id="importFileInput" hidden accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)">
 
-</div>
-
-<div class="card">
-
-<form id="studentForm">
-
-<div class="section-title">Academic</div>
-
-<div class="field-group">
-<label>Class</label>
-<select id="CLASS">
-<option>IX</option>
-<option>X</option>
-<option>XI</option>
-<option>XII</option>
-</select>
-</div>
-
-<div class="field-group">
-<label>Roll No</label>
-<input id="ROLL_NO">
-</div>
-
-<div class="field-group">
-<label>Student Name</label>
-<input id="STUDENT_NAME">
-</div>
-
-<div class="field-group">
-<label>Gender</label>
-<select id="GENDER">
-<option>Male</option>
-<option>Female</option>
-</select>
-</div>
-
-<div class="field-group">
-<label>Mobile</label>
-<input id="MOBILE_1">
-</div>
-
-<button type="button" class="btn-add" onclick="saveRecord()">Save Record</button>
-
-<button type="button" class="btn-search" onclick="openSearch()">Search Students</button>
-
-<button type="button" onclick="exportExcel()">Export Excel</button>
-
-<button type="button" onclick="downloadBackup()">Download Backup</button>
-
-<button type="button" onclick="restoreBackup()">Restore Backup</button>
-
-<button type="button" class="btn-clear" onclick="wipeDatabase()">Wipe Database</button>
-
-</form>
-
-</div>
-
+<!-- Search Modal -->
 <div id="searchModal">
-
-<div class="modal">
-
-<h3>Search Students</h3>
-
-<input id="searchInput" placeholder="Search..." onkeyup="performSearch()">
-
-<div id="searchResults"></div>
-
-<button onclick="closeSearch()">Close</button>
-
+    <div class="modal-content">
+        <h3>Search Records</h3>
+        <select id="classFilter" onchange="performSearch()" style="width:100%;margin-bottom:8px;">
+            <option value="">All Classes</option>
+            <option>IX</option><option>X</option><option>XI</option><option>XII</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="Search by name or roll no..." onkeyup="performSearch()">
+        <div id="searchResults" style="margin-top:15px;max-height:400px;overflow-y:auto;"></div>
+        <button onclick="closeSearch()" style="background:#6B7280;width:100%;margin-top:10px;color:white;border:none;height:45px;border-radius:10px;">Close</button>
+    </div>
 </div>
 
+<div id="toast"></div>
+
+<script>
+    const FIELDS = [
+        "CLASS","ACADEMIC_YEAR","DIVISION","ROLL_NO","GR_NO","STUDENT_NAME",
+        "DOA","PREV_SCHOOL","GENDER","DOB_LC","POB","CASTE",
+        "AADHAR_NO","NAME_AADHAR","DOB_AADHAR","FATHER_NAME","MOTHER_NAME",
+        "MOBILE_1","MOBILE_2","EMAIL_ID","ADDRESS",
+        "BANK_ACC","BANK_NAME","IFSC","PEN","APAAR",
+        "HOSTEL_STUDENT","BLOOD_GROUP","HEIGHT","WEIGHT",
+        "PERCENTAGE","DISTANCE","HOSTEL","ORPHAN","APL_BPL",
+        "REMARK","VOC_STATUS","VOC_NAME"
+    ];
+
+    let db = JSON.parse(localStorage.getItem('eduDB_v4_final')) || [];
+    window.addEventListener('load', updateDashboard);
+
+    /* ── Helpers ── */
+    function toggleVoc(val) {
+        document.getElementById('vocBox').style.display = (val === 'Yes') ? 'block' : 'none';
+    }
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = () => {
+            document.getElementById('photo-preview').innerHTML = `<img src="${reader.result}">`;
+            document.getElementById('photoBase64').value = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+    function startCamera() {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*'; input.capture = 'user';
+        input.onchange = previewImage; input.click();
+    }
+    function showToast(m, c='#10B981') {
+        const t = document.getElementById('toast');
+        t.textContent = m; t.style.background = c; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3500);
+    }
+    document.querySelectorAll('.up').forEach(el =>
+        el.addEventListener('input', () => el.value = el.value.toUpperCase())
+    );
+
+    /* ── CRUD ── */
+    function handleSave() {
+        if (!document.getElementById('studentForm').checkValidity()) {
+            document.getElementById('studentForm').reportValidity(); return;
+        }
+        const record = { id: Date.now(), photo: document.getElementById('photoBase64').value };
+        FIELDS.forEach(f => { if (document.getElementById(f)) record[f] = document.getElementById(f).value; });
+        db.push(record);
+        localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
+        resetApp(); showToast('✅ Saved!'); updateDashboard();
+    }
+    function resetApp() {
+        document.getElementById('studentForm').reset();
+        document.getElementById('photo-preview').innerHTML = '<span>3.5 x 4.5 cm Photo<br>Required</span>';
+        document.getElementById('photoBase64').value = '';
+        document.getElementById('editID').value = '';
+        toggleVoc('No');
+        document.getElementById('saveBtn').style.display   = 'flex';
+        document.getElementById('updateBtn').style.display = 'none';
+    }
+    function openSearch()  { document.getElementById('searchModal').style.display = 'flex'; performSearch(); }
+    function closeSearch() { document.getElementById('searchModal').style.display = 'none'; }
+    function performSearch() {
+        const q  = document.getElementById('searchInput').value.toLowerCase();
+        const cf = document.getElementById('classFilter').value;
+        const filtered = db.filter(r =>
+            (!cf || r.CLASS === cf) &&
+            ((r.STUDENT_NAME||'').toLowerCase().includes(q) ||
+             (r.ROLL_NO||'').toString().includes(q))
+        );
+        document.getElementById('searchResults').innerHTML = filtered.map(r => `
+            <div class="search-item">
+                <strong>${r.STUDENT_NAME||'-'}</strong> &nbsp;(Roll: ${r.ROLL_NO||'-'})<br>
+                Class: ${r.CLASS||'-'} &nbsp;|&nbsp; Year: ${r.ACADEMIC_YEAR||'-'}
+                <div style="display:flex;gap:5px;margin-top:5px;">
+                    <button style="flex:1;background:var(--warning);color:white;border:none;padding:8px;border-radius:5px;" onclick="startEdit(${r.id})">Edit</button>
+                    <button style="flex:1;background:var(--primary);color:white;border:none;padding:8px;border-radius:5px;" onclick="printRecord(${r.id})">Print</button>
+                    <button style="flex:1;background:var(--error);color:white;border:none;padding:8px;border-radius:5px;" onclick="handleDelete(${r.id})">Del</button>
+                </div>
+            </div>
+        `).join('') || '<p style="color:#888;text-align:center;padding:20px;">No records found.</p>';
+    }
+    function startEdit(id) {
+        const s = db.find(x => x.id === id);
+        FIELDS.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = s[f]||''; });
+        if (s.photo) {
+            document.getElementById('photo-preview').innerHTML = `<img src="${s.photo}">`;
+            document.getElementById('photoBase64').value = s.photo;
+        }
+        document.getElementById('editID').value = id;
+        document.getElementById('saveBtn').style.display   = 'none';
+        document.getElementById('updateBtn').style.display = 'flex';
+        toggleVoc(s.VOC_STATUS); closeSearch(); window.scrollTo(0,0);
+    }
+    function handleUpdate() {
+        const id    = parseInt(document.getElementById('editID').value);
+        const index = db.findIndex(s => s.id === id);
+        if (index === -1) { showToast('Record not found','#EF4444'); return; }
+        FIELDS.forEach(f => { if (document.getElementById(f)) db[index][f] = document.getElementById(f).value; });
+        db[index].photo = document.getElementById('photoBase64').value;
+        localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
+        resetApp(); showToast('✅ Updated!'); updateDashboard();
+    }
+    function handleDelete(id) {
+        if (!confirm('Delete this student record?')) return;
+        db = db.filter(s => s.id !== id);
+        localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
+        performSearch(); updateDashboard();
+    }
+    function wipeDatabase() {
+        const code = Math.floor(1000 + Math.random()*9000);
+        if (prompt(`Enter ${code} to confirm wiping ALL data:`) == code) {
+            db = []; localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
+            showToast('🗑️ All data wiped','#EF4444'); updateDashboard();
+        }
+    }
+    function updateDashboard() {
+        document.getElementById('totalStudents').innerText = db.length;
+        document.getElementById('boys').innerText  = db.filter(s => s.GENDER==='Male').length;
+        document.getElementById('girls').innerText = db.filter(s => s.GENDER==='Female').length;
+        renderClassTable();
+    }
+
+    /* ══════════════════════════════════════════════════════
+       BUILD ONE STUDENT'S PRINT PAGE HTML
+       Called by both printRecord() and printAll()
+    ══════════════════════════════════════════════════════ */
+    function buildStudentPageHTML(s) {
+        const academicYear = s.ACADEMIC_YEAR || '-';
+        const numRows      = Math.ceil(FIELDS.length / 3);   // 13 rows for 38 fields
+
+        const photoHtml = s.photo
+            ? `<img src="${s.photo}" class="print-photo">`
+            : `<div class="print-photo-placeholder">AFFIX<br>PHOTO</div>`;
+
+        const cells = FIELDS.map(f => `
+            <div class="print-cell">
+                <span class="print-label">${f.replace(/_/g,' ')}</span>
+                <span class="print-value">${s[f] || '-'}</span>
+            </div>`).join('');
+
+        return `
+        <div class="print-page">
+            <div class="print-header">
+                <div class="print-header-text">
+                    <h1>Student Admission Record</h1>
+                    <p>&#128197; Academic Year: ${academicYear}</p>
+                </div>
+                ${photoHtml}
+            </div>
+            <div class="print-grid" style="grid-template-rows:repeat(${numRows},1fr);">
+                ${cells}
+            </div>
+            <div class="footer-sign">Headmaster's Signature</div>
+        </div>`;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       FIX 1 + EXISTING: PRINT SINGLE STUDENT
+    ══════════════════════════════════════════════════════ */
+    function printRecord(id) {
+        const s = db.find(x => x.id === id);
+        if (!s) { showToast('Record not found','#EF4444'); return; }
+        document.getElementById('printArea').innerHTML = buildStudentPageHTML(s);
+        setTimeout(() => window.print(), 100);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       FIX 2: PRINT ALL STUDENTS — one page per student
+       All pages go into #printArea; page-break-after:always
+       on each .print-page handles pagination automatically.
+       The last page uses page-break-after:avoid so no
+       trailing blank page is added.
+    ══════════════════════════════════════════════════════ */
+    function printAll() {
+        if (!db.length) { showToast('No records to print!','#F59E0B'); return; }
+        if (!confirm(`Print ALL ${db.length} student form(s)?\nThis may take a moment for large batches.`)) return;
+        showToast(`⏳ Preparing ${db.length} pages...`,'#1E3A8A');
+        // Short delay so toast renders before print dialog
+        setTimeout(() => {
+            document.getElementById('printArea').innerHTML = db.map(s => buildStudentPageHTML(s)).join('');
+            setTimeout(() => window.print(), 200);
+        }, 300);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       FIX 3: IMPORT EXCEL / CSV
+       - Accepts .xlsx, .xls, .csv
+       - Maps columns by normalised name (case-insensitive,
+         spaces/underscores ignored): "Student Name" → STUDENT_NAME
+       - Date cells are auto-converted to YYYY-MM-DD strings
+       - Existing records are preserved; imported rows are appended
+    ══════════════════════════════════════════════════════ */
+    function importExcel() {
+        document.getElementById('importFileInput').click();
+    }
+
+    function handleImportFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        event.target.value = ''; // allow re-import of same file
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data      = new Uint8Array(e.target.result);
+                const workbook  = XLSX.read(data, { type:'array', cellDates:true });
+                const sheet     = workbook.Sheets[workbook.SheetNames[0]];
+                const rows      = XLSX.utils.sheet_to_json(sheet, { defval:'' });
+
+                if (!rows.length) { showToast('No data rows found in file','#F59E0B'); return; }
+
+                /* Build normalised lookup: "STUDENTNAME" → "STUDENT_NAME" */
+                function norm(str) {
+                    return String(str).toUpperCase().replace(/[\s_.\-]/g,'');
+                }
+                const fieldMap = {};
+                FIELDS.forEach(f => { fieldMap[norm(f)] = f; });
+
+                let imported = 0, skipped = 0;
+
+                rows.forEach((row, i) => {
+                    const record = {
+                        id    : Date.now() + i * 7 + Math.floor(Math.random()*999),
+                        photo : ''
+                    };
+                    let hasData = false;
+
+                    Object.keys(row).forEach(col => {
+                        const mapped = fieldMap[norm(col)];
+                        if (!mapped) return;
+                        let val = row[col];
+                        /* Convert JS Date objects (from cellDates:true) → YYYY-MM-DD */
+                        if (val instanceof Date && !isNaN(val)) {
+                            val = val.getFullYear() + '-' +
+                                  String(val.getMonth()+1).padStart(2,'0') + '-' +
+                                  String(val.getDate()).padStart(2,'0');
+                        }
+                        record[mapped] = String(val).trim();
+                        if (record[mapped]) hasData = true;
+                    });
+
+                    /* Ensure every field exists */
+                    FIELDS.forEach(f => { if (record[f] === undefined) record[f] = ''; });
+
+                    if (hasData) { db.push(record); imported++; }
+                    else         { skipped++; }
+                });
+
+                localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
+                updateDashboard();
+                const msg = skipped
+                    ? `✅ Imported ${imported} records (${skipped} blank rows skipped)`
+                    : `✅ Imported ${imported} records successfully!`;
+                showToast(msg,'#065F46');
+
+            } catch(err) {
+                console.error(err);
+                showToast('❌ Import failed: ' + err.message,'#EF4444');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       EXPORT TO EXCEL (photos excluded to keep file small)
+    ══════════════════════════════════════════════════════ */
+    function exportToExcel() {
+        if (!db.length) { showToast('No data to export!','#F59E0B'); return; }
+        const exportData = db.map(s => {
+            const row = {};
+            FIELDS.forEach(f => row[f] = s[f]||'');
+            return row;
+        });
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Students');
+        XLSX.writeFile(wb, 'Student_Database_v1.0.xlsx');
+    }
+</script>
+
+<!-- Class-Wise Student Table -->
+<div style="max-width:900px;margin:25px auto;background:#fff;padding:15px;border-radius:10px;border:1px solid #BFDBFE;">
+    <h3 style="margin-top:0;">Class Wise Student Table</h3>
+    <select id="tableClassFilter" onchange="renderClassTable()" style="margin-bottom:10px;width:auto;min-width:160px;padding:6px;border-radius:6px;border:1px solid #ccc;">
+        <option value="">All Classes</option>
+        <option>IX</option><option>X</option><option>XI</option><option>XII</option>
+    </select>
+    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+        <thead>
+            <tr style="background:#EFF6FF;">
+                <th style="padding:8px;border:1px solid #ccc;">#</th>
+                <th style="padding:8px;border:1px solid #ccc;">Class</th>
+                <th style="padding:8px;border:1px solid #ccc;">Acad. Year</th>
+                <th style="padding:8px;border:1px solid #ccc;">Roll</th>
+                <th style="padding:8px;border:1px solid #ccc;">Name</th>
+                <th style="padding:8px;border:1px solid #ccc;">Gender</th>
+                <th style="padding:8px;border:1px solid #ccc;">Mobile</th>
+            </tr>
+        </thead>
+        <tbody id="classTableBody"></tbody>
+    </table>
+    <p id="tableCount" style="font-size:0.75rem;color:#64748b;margin-top:8px;margin-bottom:0;"></p>
 </div>
 
 <script>
-
-let db=JSON.parse(localStorage.getItem("eduDB_v4_final"))||[];
-
-function updateDashboard(){
-
-document.getElementById("totalStudents").innerText=db.length;
-
-let boys=db.filter(s=>s.GENDER=="Male").length;
-let girls=db.filter(s=>s.GENDER=="Female").length;
-
-document.getElementById("boys").innerText=boys;
-document.getElementById("girls").innerText=girls;
-
-}
-
-updateDashboard();
-
-function saveRecord(){
-
-let record={
-id:Date.now(),
-CLASS:CLASS.value,
-ROLL_NO:ROLL_NO.value,
-STUDENT_NAME:STUDENT_NAME.value,
-GENDER:GENDER.value,
-MOBILE_1:MOBILE_1.value
-};
-
-db.push(record);
-
-localStorage.setItem("eduDB_v4_final",JSON.stringify(db));
-
-updateDashboard();
-
-alert("Saved");
-
-}
-
-function openSearch(){
-searchModal.style.display="block";
-performSearch();
-}
-
-function closeSearch(){
-searchModal.style.display="none";
-}
-
-function performSearch(){
-
-let q=searchInput.value.toLowerCase();
-
-let results=db.filter(r=>
-r.STUDENT_NAME.toLowerCase().includes(q)
-|| r.ROLL_NO.includes(q)
-);
-
-searchResults.innerHTML=results.map(r=>`
-
-<div class="search-item">
-
-<b>${r.STUDENT_NAME}</b><br>
-
-Class ${r.CLASS} | Roll ${r.ROLL_NO}
-
-<br><br>
-
-<button onclick="deleteStudent(${r.id})">Delete</button>
-
-</div>
-
-`).join("");
-
-}
-
-function deleteStudent(id){
-
-db=db.filter(s=>s.id!=id);
-
-localStorage.setItem("eduDB_v4_final",JSON.stringify(db));
-
-performSearch();
-
-updateDashboard();
-
-}
-
-function exportExcel(){
-
-let ws=XLSX.utils.json_to_sheet(db);
-
-let wb=XLSX.utils.book_new();
-
-XLSX.utils.book_append_sheet(wb,ws,"Students");
-
-XLSX.writeFile(wb,"Student_Data.xlsx");
-
-}
-
-function downloadBackup(){
-
-let data=JSON.stringify(db);
-
-let blob=new Blob([data]);
-
-let a=document.createElement("a");
-
-a.href=URL.createObjectURL(blob);
-
-a.download="student_backup.json";
-
-a.click();
-
-}
-
-function restoreBackup(){
-
-let input=document.createElement("input");
-
-input.type="file";
-
-input.onchange=e=>{
-
-let file=e.target.files[0];
-
-let reader=new FileReader();
-
-reader.onload=()=>{
-
-db=JSON.parse(reader.result);
-
-localStorage.setItem("eduDB_v4_final",JSON.stringify(db));
-
-updateDashboard();
-
-alert("Backup Restored");
-
-};
-
-reader.readAsText(file);
-
-};
-
-input.click();
-
-}
-
-function wipeDatabase(){
-
-if(confirm("Delete all data?")){
-
-db=[];
-
-localStorage.setItem("eduDB_v4_final","[]");
-
-updateDashboard();
-
-}
-
-}
-
+    function renderClassTable() {
+        if (typeof db === 'undefined') return;
+        const cls  = document.getElementById('tableClassFilter').value;
+        const rows = db.filter(s => !cls || s.CLASS === cls);
+        document.getElementById('classTableBody').innerHTML = rows.length
+            ? rows.map((r,i) => `
+                <tr style="background:${i%2===0?'#fff':'#F8FAFF'};">
+                    <td style="padding:7px;border:1px solid #ccc;text-align:center;">${i+1}</td>
+                    <td style="padding:7px;border:1px solid #ccc;text-align:center;">${r.CLASS||''}</td>
+                    <td style="padding:7px;border:1px solid #ccc;text-align:center;">${r.ACADEMIC_YEAR||''}</td>
+                    <td style="padding:7px;border:1px solid #ccc;text-align:center;">${r.ROLL_NO||''}</td>
+                    <td style="padding:7px;border:1px solid #ccc;font-weight:600;">${r.STUDENT_NAME||''}</td>
+                    <td style="padding:7px;border:1px solid #ccc;text-align:center;">${r.GENDER||''}</td>
+                    <td style="padding:7px;border:1px solid #ccc;">${r.MOBILE_1||''}</td>
+                </tr>`).join('')
+            : '<tr><td colspan="7" style="text-align:center;padding:15px;color:#888;">No records found.</td></tr>';
+        document.getElementById('tableCount').textContent =
+            `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''}`;
+    }
+    window.addEventListener('load', () => setTimeout(renderClassTable, 300));
 </script>
 
 </body>
