@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1E3A8A">
     <title>Student Data Master v1.0</title>
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EduData">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -622,6 +629,17 @@
             `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''}`;
     }
     window.addEventListener('load', () => setTimeout(renderClassTable, 300));
+</script>
+
+<!-- PWA: Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.warn('SW registration failed:', err));
+        });
+    }
 </script>
 
 </body>
