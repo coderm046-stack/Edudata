@@ -261,8 +261,7 @@
                 <label>DIVISION</label>
                 <select id="DIVISION" required>
                     <option value="">Select</option>
-                    <option>A</option><option>B</option><option>C</option><option>D</option>
-                    <option>E</option><option>F</option><option>G</option><option>H</option><option>I
+                    <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option><option>J</option><option>K</option><option>L</option><option>M</option><option>N</option><option>O</option><option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
                 </select>
             </div>
             <div class="field-group"><label>ROLL NO.</label><input type="number" id="ROLL_NO" required></div>
@@ -296,17 +295,20 @@
             <div class="field-group"><label>APAAR ID</label><input type="text" id="APAAR" class="up"></div>
 
             <div class="section-title">Medical &amp; Misc</div>
+            <div class="field-group">
+                <label>HOSTEL STUDENT</label>
+                <select id="HOSTEL_STUDENT"><option>No</option><option>Yes</option></select>
+            </div>
             <div class="field-group"><label>BLOOD GROUP</label><select id="BLOOD_GROUP"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
             <div class="field-group"><label>HEIGHT (CM)</label><input type="number" id="HEIGHT"></div>
             <div class="field-group"><label>WEIGHT (KG)</label><input type="number" id="WEIGHT"></div>
             <div class="field-group"><label>LAST CLASS %</label><input type="number" id="PERCENTAGE" step="0.01"></div>
             <div class="field-group"><label>DISTANCE (KM)</label><input type="number" id="DISTANCE" step="0.1"></div>
-            <div class="field-group"><label>HOSTEL?</label><select id="HOSTEL"><option>No</option><option>Yes</option></select></div>
             <div class="field-group"><label>ORPHAN?</label><select id="ORPHAN"><option>No</option><option>Yes</option></select></div>
             <div class="field-group"><label>APL/BPL</label><select id="APL_BPL"><option>APL</option><option>BPL</option></select></div>
             <div class="field-group"><label>REMARK</label><textarea id="REMARK" rows="1" class="up"></textarea></div>
 
-            <div class="section-title">Vocational/optional sub Info</div>
+            <div class="section-title">Vocational Info</div>
             <div class="field-group">
                 <label>VOCATIONAL SUBJECT AT Xth?</label>
                 <select id="VOC_STATUS" onchange="toggleVoc(this.value)" required>
@@ -314,7 +316,7 @@
                 </select>
             </div>
             <div class="field-group" id="vocBox" style="display:none;">
-                <label>NAME OF VOCATIONAL/OPTIONAL SUBJECT</label>
+                <label>NAME OF VOCATIONAL SUBJECT</label>
                 <input type="text" id="VOC_NAME" class="up" placeholder="Enter Subject Name">
             </div>
 
@@ -356,6 +358,10 @@
                 <select id="tbl-class"    onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
                     <option value="">All Classes</option>
                     <option>IX</option><option>X</option><option>XI</option><option>XII</option>
+                </select>
+                <select id="tbl-div" onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                    <option value="">All Divisions</option>
+                    <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option><option>J</option><option>K</option><option>L</option><option>M</option><option>N</option><option>O</option><option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
                 </select>
                 <select id="tbl-year"     onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
                     <option value="">All Years</option>
@@ -537,12 +543,12 @@
         "MOBILE_1","MOBILE_2","EMAIL_ID","ADDRESS",
         "BANK_ACC","BANK_NAME","IFSC","PEN","APAAR",
         "HOSTEL_STUDENT","BLOOD_GROUP","HEIGHT","WEIGHT",
-        "PERCENTAGE","DISTANCE","HOSTEL","ORPHAN","APL_BPL",
+        "PERCENTAGE","DISTANCE","ORPHAN","APL_BPL",
         "REMARK","VOC_STATUS","VOC_NAME"
     ];
 
     let db = JSON.parse(localStorage.getItem('eduDB_v4_final')) || [];
-    window.addEventListener('load', updateDashboard);
+    window.addEventListener('load', () => { fixExistingData(); updateDashboard(); });
 
     /* ── Helpers ── */
     function toggleVoc(val) {
@@ -741,19 +747,68 @@
     function handleImportFile(event) {
         const file = event.target.files[0];
         if (!file) return;
-        event.target.value = ''; // allow re-import of same file
+        event.target.value = '';
+
+        /* ── Dropdown value normaliser ──────────────────────────────
+           Excel may contain "MALE", "male", "M", "1", "yes", "YES",
+           "y", "TRUE" etc. This maps all variants to the exact values
+           the app uses so every filter, count and dashboard stat works.
+        ────────────────────────────────────────────────────────────── */
+        function normaliseDropdown(field, raw) {
+            const v = String(raw).trim().toUpperCase();
+
+            // GENDER
+            if (field === 'GENDER') {
+                if (['MALE','M','BOY','1'].includes(v))   return 'Male';
+                if (['FEMALE','F','GIRL','2'].includes(v)) return 'Female';
+                return raw; // keep original if already correct
+            }
+            // Yes/No fields
+            const yesNoFields = ['HOSTEL_STUDENT','ORPHAN','VOC_STATUS'];
+            if (yesNoFields.includes(field)) {
+                if (['YES','Y','TRUE','1'].includes(v))  return 'Yes';
+                if (['NO','N','FALSE','0',''].includes(v)) return 'No';
+                return raw;
+            }
+            // CLASS
+            if (field === 'CLASS') {
+                if (['9','IX','CLASS9','CLASS IX','STD9','STD IX'].includes(v))  return 'IX';
+                if (['10','X','CLASS10','CLASS X','STD10','STD X'].includes(v))  return 'X';
+                if (['11','XI','CLASS11','CLASS XI','STD11','STD XI'].includes(v)) return 'XI';
+                if (['12','XII','CLASS12','CLASS XII','STD12','STD XII'].includes(v)) return 'XII';
+                return raw;
+            }
+            // DIVISION
+            if (field === 'DIVISION') {
+                if (['A','B','C','D'].includes(v)) return v;
+                return raw;
+            }
+            // APL_BPL
+            if (field === 'APL_BPL') {
+                if (v === 'BPL') return 'BPL';
+                if (v === 'APL') return 'APL';
+                return raw;
+            }
+            // BLOOD_GROUP — normalise spacing e.g. "A +" → "A+"
+            if (field === 'BLOOD_GROUP') {
+                const clean = v.replace(/\s/g,'');
+                const valid = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+                return valid.includes(clean) ? clean : raw;
+            }
+            return raw; // free-text fields — keep as-is
+        }
 
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const data      = new Uint8Array(e.target.result);
-                const workbook  = XLSX.read(data, { type:'array', cellDates:true });
-                const sheet     = workbook.Sheets[workbook.SheetNames[0]];
-                const rows      = XLSX.utils.sheet_to_json(sheet, { defval:'' });
+                const data     = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type:'array', cellDates:true });
+                const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+                const rows     = XLSX.utils.sheet_to_json(sheet, { defval:'' });
 
                 if (!rows.length) { showToast('No data rows found in file','#F59E0B'); return; }
 
-                /* Build normalised lookup: "STUDENTNAME" → "STUDENT_NAME" */
+                /* Normalised column-name → FIELD lookup */
                 function norm(str) {
                     return String(str).toUpperCase().replace(/[\s_.\-]/g,'');
                 }
@@ -764,8 +819,8 @@
 
                 rows.forEach((row, i) => {
                     const record = {
-                        id    : Date.now() + i * 7 + Math.floor(Math.random()*999),
-                        photo : ''
+                        id   : Date.now() + i * 7 + Math.floor(Math.random()*999),
+                        photo: ''
                     };
                     let hasData = false;
 
@@ -773,18 +828,31 @@
                         const mapped = fieldMap[norm(col)];
                         if (!mapped) return;
                         let val = row[col];
-                        /* Convert JS Date objects (from cellDates:true) → YYYY-MM-DD */
+
+                        /* Date objects → YYYY-MM-DD */
                         if (val instanceof Date && !isNaN(val)) {
                             val = val.getFullYear() + '-' +
                                   String(val.getMonth()+1).padStart(2,'0') + '-' +
                                   String(val.getDate()).padStart(2,'0');
+                        } else {
+                            val = String(val).trim();
                         }
-                        record[mapped] = String(val).trim();
-                        if (record[mapped]) hasData = true;
+
+                        /* Normalise dropdown values to exact app-expected strings */
+                        val = normaliseDropdown(mapped, val);
+
+                        record[mapped] = val;
+                        if (val) hasData = true;
                     });
 
-                    /* Ensure every field exists */
+                    /* Fill any missing fields */
                     FIELDS.forEach(f => { if (record[f] === undefined) record[f] = ''; });
+
+                    /* Default Yes/No dropdowns to "No" if blank after import */
+                    ['HOSTEL_STUDENT','ORPHAN','VOC_STATUS'].forEach(f => {
+                        if (!record[f]) record[f] = 'No';
+                    });
+                    if (!record['APL_BPL']) record['APL_BPL'] = 'APL';
 
                     if (hasData) { db.push(record); imported++; }
                     else         { skipped++; }
@@ -803,6 +871,65 @@
             }
         };
         reader.readAsArrayBuffer(file);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       FIX EXISTING DATA — normalise dropdown values in db
+       Useful for records already imported before this fix.
+       Runs automatically on every page load.
+    ══════════════════════════════════════════════════════ */
+    function fixExistingData() {
+        function nd(field, raw) {
+            const v = String(raw||'').trim().toUpperCase();
+            if (field === 'GENDER') {
+                if (['MALE','M','BOY','1'].includes(v))    return 'Male';
+                if (['FEMALE','F','GIRL','2'].includes(v)) return 'Female';
+                return raw||'';
+            }
+            const ynF = ['HOSTEL_STUDENT','ORPHAN','VOC_STATUS'];
+            if (ynF.includes(field)) {
+                if (['YES','Y','TRUE','1'].includes(v))      return 'Yes';
+                if (['NO','N','FALSE','0',''].includes(v)||!v) return 'No';
+                return raw||'No';
+            }
+            if (field === 'CLASS') {
+                if (['9','IX','CLASS9','CLASS IX'].includes(v))   return 'IX';
+                if (['10','X','CLASS10','CLASS X'].includes(v))   return 'X';
+                if (['11','XI','CLASS11','CLASS XI'].includes(v)) return 'XI';
+                if (['12','XII','CLASS12','CLASS XII'].includes(v)) return 'XII';
+                return raw||'';
+            }
+            if (field === 'APL_BPL') {
+                if (v==='BPL') return 'BPL';
+                return raw||'APL';
+            }
+            if (field === 'BLOOD_GROUP') {
+                const clean = v.replace(/\s/g,'');
+                return ['A+','A-','B+','B-','AB+','AB-','O+','O-'].includes(clean) ? clean : (raw||'');
+            }
+            return raw||'';
+        }
+
+        let changed = 0;
+        db = db.map(s => {
+            const fixed = Object.assign({}, s);
+            ['GENDER','HOSTEL_STUDENT','ORPHAN','VOC_STATUS','CLASS','APL_BPL','BLOOD_GROUP'].forEach(f => {
+                const orig = fixed[f];
+                fixed[f] = nd(f, fixed[f]);
+                if (fixed[f] !== orig) changed++;
+            });
+            // Default empty yes/no fields to 'No'
+            ['HOSTEL_STUDENT','ORPHAN','VOC_STATUS'].forEach(f => {
+                if (!fixed[f]) fixed[f] = 'No';
+            });
+            if (!fixed['APL_BPL']) fixed['APL_BPL'] = 'APL';
+            return fixed;
+        });
+
+        if (changed > 0) {
+            localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
+            console.log(`Fixed ${changed} dropdown values in existing data.`);
+        }
     }
 
     /* ══════════════════════════════════════════════════════
@@ -832,7 +959,7 @@
     }
 
     function clearTableFilters() {
-        ['tbl-class','tbl-year','tbl-gender','tbl-voc','tbl-orphan','tbl-hostel','tbl-aplbpl']
+        ['tbl-class','tbl-div','tbl-year','tbl-gender','tbl-voc','tbl-orphan','tbl-hostel','tbl-aplbpl']
             .forEach(id => document.getElementById(id).value = '');
         renderClassTable();
     }
@@ -840,6 +967,7 @@
     function renderClassTable() {
         if (typeof db === 'undefined') return;
         const fCls    = document.getElementById('tbl-class').value;
+        const fDiv    = document.getElementById('tbl-div').value;
         const fYear   = document.getElementById('tbl-year').value;
         const fGender = document.getElementById('tbl-gender').value;
         const fVoc    = document.getElementById('tbl-voc').value;
@@ -847,15 +975,18 @@
         const fHostel = document.getElementById('tbl-hostel').value;
         const fApl    = document.getElementById('tbl-aplbpl').value;
 
-        const rows = db.filter(s =>
-            (!fCls    || s.CLASS         === fCls)    &&
-            (!fYear   || s.ACADEMIC_YEAR === fYear)   &&
-            (!fGender || s.GENDER        === fGender) &&
-            (!fVoc    || s.VOC_STATUS    === fVoc)    &&
-            (!fOrphan || s.ORPHAN        === fOrphan) &&
-            (!fHostel || (s.HOSTEL==='Yes'||s.HOSTEL_STUDENT==='Yes') === (fHostel==='Yes')) &&
-            (!fApl    || s.APL_BPL       === fApl)
-        );
+        const rows = db.filter(s => {
+            const hostelYes = s.HOSTEL_STUDENT==='Yes';
+            if (fCls    && s.CLASS         !== fCls)    return false;
+            if (fDiv    && s.DIVISION       !== fDiv)    return false;
+            if (fYear   && s.ACADEMIC_YEAR !== fYear)   return false;
+            if (fGender && s.GENDER        !== fGender) return false;
+            if (fVoc    && s.VOC_STATUS    !== fVoc)    return false;
+            if (fOrphan && s.ORPHAN        !== fOrphan) return false;
+            if (fHostel && (fHostel==='Yes') !== hostelYes) return false;
+            if (fApl    && s.APL_BPL       !== fApl)    return false;
+            return true;
+        });
 
         const td = (val, center) =>
             `<td style="padding:7px 8px;border:1px solid #e2e8f0;white-space:nowrap;${center?'text-align:center;':''}">${val||'-'}</td>`;
@@ -887,9 +1018,9 @@
                     </td>
                     <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
                         <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                            background:${(r.HOSTEL==='Yes'||r.HOSTEL_STUDENT==='Yes')?'#eff6ff':'#f9fafb'};
-                            color:${(r.HOSTEL==='Yes'||r.HOSTEL_STUDENT==='Yes')?'#1e40af':'#6b7280'};">
-                            ${(r.HOSTEL==='Yes'||r.HOSTEL_STUDENT==='Yes')?'Yes':'No'}
+                            background:${r.HOSTEL_STUDENT==='Yes'?'#eff6ff':'#f9fafb'};
+                            color:${r.HOSTEL_STUDENT==='Yes'?'#1e40af':'#6b7280'};">
+                            ${r.HOSTEL_STUDENT==='Yes'?'Yes':'No'}
                         </span>
                     </td>
                     ${td(r.APL_BPL,true)}
@@ -922,7 +1053,7 @@
         document.getElementById('d-girls').textContent  = db.filter(s=>s.GENDER==='Female').length;
         document.getElementById('d-orphan').textContent = db.filter(s=>s.ORPHAN==='Yes').length;
         document.getElementById('d-voc').textContent    = db.filter(s=>s.VOC_STATUS==='Yes').length;
-        document.getElementById('d-hostel').textContent = db.filter(s=>s.HOSTEL==='Yes'||s.HOSTEL_STUDENT==='Yes').length;
+        document.getElementById('d-hostel').textContent = db.filter(s=>s.HOSTEL_STUDENT==='Yes').length;
         document.getElementById('d-bpl').textContent    = db.filter(s=>s.APL_BPL==='BPL').length;
 
         // Class-wise breakdown rows
@@ -935,7 +1066,7 @@
                 const girls  = sub.filter(s=>s.GENDER==='Female').length;
                 const orphan = sub.filter(s=>s.ORPHAN==='Yes').length;
                 const voc    = sub.filter(s=>s.VOC_STATUS==='Yes').length;
-                const hostel = sub.filter(s=>s.HOSTEL==='Yes'||s.HOSTEL_STUDENT==='Yes').length;
+                const hostel = sub.filter(s=>s.HOSTEL_STUDENT==='Yes').length;
                 const bpl    = sub.filter(s=>s.APL_BPL==='BPL').length;
                 if (!sub.length) return '';
                 return `<tr style="background:${ci%2===0?'#fff':'#f8faff'};">
