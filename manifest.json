@@ -1,5 +1,5 @@
 {
-  "name": "Student Data Master",
+  "name": "EduData",
   "short_name": "EduData",
   "start_url": "./index.html",
   "display": "standalone",
