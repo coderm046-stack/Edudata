@@ -14,79 +14,702 @@
     <meta name="apple-mobile-web-app-title" content="EduData">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary:#1E3A8A; --secondary:#10B981; --bg:#DBEAFE; --error:#EF4444; --warning:#F59E0B; --white:#FFFFFF; }
-        * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        body { font-family:'Segoe UI',sans-serif; background-color:var(--bg); margin:0; padding:10px; }
-        header { width:100%; max-width:650px; background:var(--primary); color:white; padding:15px; border-radius:12px; text-align:center; margin:0 auto 15px auto; }
-        .card { background:var(--white); width:100%; max-width:650px; border-radius:15px; padding:20px; border:1px solid #BFDBFE; margin:0 auto 20px auto; }
-        .photo-container { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; gap:10px; }
-        #photo-preview { width:35mm; height:45mm; border:2px dashed #cbd5e1; background:#f8fafc; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:4px; text-align:center; font-size:0.7rem; }
-        #photo-preview img { width:100%; height:100%; object-fit:cover; }
-        .btn-photo { padding:8px 12px; font-size:0.8rem; background:#475569; border-radius:6px; color:white; border:none; cursor:pointer; }
-        .section-title { color:var(--primary); font-weight:800; border-bottom:2px solid #E5E7EB; margin:20px 0 10px 0; padding-bottom:5px; text-transform:uppercase; font-size:0.8rem; display:flex; align-items:center; gap:8px; }
-        .field-group { margin-bottom:10px; }
-        label { display:block; font-size:0.7rem; font-weight:700; margin-bottom:3px; color:#4B5563; }
-        input,select,textarea { width:100%; min-height:38px; padding:8px; border:1.5px solid #D1D5DB; border-radius:8px; font-size:0.95rem; background:#F9FAFB; }
-        .up { text-transform:uppercase; }
-        .btn-stack { display:flex; flex-direction:column; gap:10px; margin-top:25px; }
-        button { width:100%; min-height:48px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
-        .btn-add { background:var(--secondary); }
-        .btn-search { background:var(--primary); }
-        .btn-update { background:var(--warning); display:none; }
-        .btn-clear { background:var(--error); }
-        #searchModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; padding:15px; justify-content:center; align-items:flex-start; overflow-y:auto; }
-        .modal-content { background:white; border-radius:15px; padding:20px; width:100%; max-width:500px; margin-top:20px; }
-        .search-item { background:#f1f5f9; padding:12px; border-radius:8px; margin-bottom:10px; border-left:5px solid var(--primary); }
-        .version-tag { text-align:center; font-size:0.7rem; color:#64748b; margin:20px 0; }
-        #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:12px 22px; border-radius:25px; color:white; display:none; z-index:10001; font-weight:bold; font-size:0.95rem; white-space:nowrap; }
-        .dashboard { display:flex; gap:10px; max-width:650px; margin:10px auto; }
-        .stat { flex:1; background:#fff; padding:12px; border-radius:10px; text-align:center; border:1px solid #BFDBFE; }
-        #studentForm { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        #studentForm .section-title { grid-column:1/-1; }
-        #studentForm .btn-stack { grid-column:1/-1; }
-        @media(max-width:650px){ #studentForm { grid-template-columns:1fr; } }
+        /* ═══════════════════════════════════════════
+           DESIGN TOKENS
+        ═══════════════════════════════════════════ */
+        :root {
+            --primary: #1A3FAB;
+            --primary-dark: #122E82;
+            --primary-light: #EEF2FF;
+            --secondary: #059669;
+            --secondary-light: #ECFDF5;
+            --accent: #6366F1;
+            --warning: #D97706;
+            --warning-light: #FFFBEB;
+            --error: #DC2626;
+            --error-light: #FEF2F2;
+            --surface: #FFFFFF;
+            --bg: #F1F5FB;
+            --border: #E2E8F0;
+            --border-strong: #CBD5E1;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --btn-export: #065F46;
+            --btn-import: #0369A1;
+            --btn-print:  #6D28D9;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+            --shadow-md: 0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+            --shadow-lg: 0 10px 30px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.06);
+        }
 
-        /* ── TABS ── */
+        /* ═══════════════════════════════════════════
+           BASE
+        ═══════════════════════════════════════════ */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 12px 10px 40px;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ═══════════════════════════════════════════
+           HEADER
+        ═══════════════════════════════════════════ */
+        header {
+            width: 100%;
+            max-width: 680px;
+            background: var(--primary);
+            color: white;
+            padding: 18px 24px;
+            border-radius: var(--radius-lg);
+            margin: 0 auto 16px auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+        }
+
+        header h2 {
+            margin: 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        header .header-badge {
+            background: rgba(255,255,255,0.18);
+            color: #C7D7FF;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 99px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* ═══════════════════════════════════════════
+           CARDS
+        ═══════════════════════════════════════════ */
+        .card {
+            background: var(--surface);
+            width: 100%;
+            max-width: 680px;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin: 0 auto 20px auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ═══════════════════════════════════════════
+           PHOTO UPLOAD
+        ═══════════════════════════════════════════ */
+        .photo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 12px;
+        }
+
+        #photo-preview {
+            width: 35mm;
+            height: 45mm;
+            border: 2px dashed var(--border-strong);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: border-color 0.2s;
+        }
+
+        #photo-preview:hover { border-color: var(--primary); }
+        #photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-photo {
+            padding: 8px 16px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s;
+            min-height: 36px;
+        }
+
+        .btn-photo:hover { background: var(--text-primary); }
+
+        /* ═══════════════════════════════════════════
+           SECTION TITLES
+        ═══════════════════════════════════════════ */
+        .section-title {
+            color: var(--primary);
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            font-size: 0.7rem;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--primary-light);
+            margin: 22px 0 14px 0;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ═══════════════════════════════════════════
+           FORM FIELDS
+        ═══════════════════════════════════════════ */
+        .field-group { margin-bottom: 12px; }
+
+        label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            min-height: 40px;
+            padding: 9px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            transition: border-color 0.18s, box-shadow 0.18s;
+            -webkit-appearance: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,63,171,0.10);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394A3B8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+            cursor: pointer;
+        }
+
+        .up { text-transform: uppercase; }
+
+        /* ═══════════════════════════════════════════
+           FORM GRID
+        ═══════════════════════════════════════════ */
+        #studentForm { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+        #studentForm .section-title { grid-column: 1/-1; }
+        #studentForm .btn-stack { grid-column: 1/-1; }
+        #studentForm .field-group.full { grid-column: 1/-1; }
+        @media(max-width: 580px) { #studentForm { grid-template-columns: 1fr; } }
+
+        /* ═══════════════════════════════════════════
+           BUTTONS
+        ═══════════════════════════════════════════ */
+        .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+
+        button {
+            width: 100%;
+            min-height: 48px;
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+            letter-spacing: 0.1px;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-add    { background: var(--secondary); box-shadow: 0 2px 8px rgba(5,150,105,0.25); }
+        .btn-add:hover { opacity: 0.92; }
+        .btn-search { background: var(--primary); box-shadow: 0 2px 8px rgba(26,63,171,0.25); }
+        .btn-search:hover { opacity: 0.92; }
+        .btn-update { background: var(--warning); box-shadow: 0 2px 8px rgba(217,119,6,0.25); display: none; }
+        .btn-clear  { background: var(--error); box-shadow: 0 2px 8px rgba(220,38,38,0.20); }
+
+        /* ═══════════════════════════════════════════
+           QUICK STATS (top of form tab)
+        ═══════════════════════════════════════════ */
+        .dashboard {
+            display: flex;
+            gap: 10px;
+            max-width: 680px;
+            margin: 0 auto 14px auto;
+        }
+
+        .stat {
+            flex: 1;
+            background: var(--surface);
+            padding: 14px 10px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat h3 {
+            margin: 0 0 2px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat p {
+            margin: 0;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ═══════════════════════════════════════════
+           TAB BAR
+        ═══════════════════════════════════════════ */
         .tab-bar {
-            display:flex; max-width:650px; margin:0 auto 15px auto;
-            background:#fff; border-radius:12px; padding:5px;
-            border:1px solid #BFDBFE; gap:5px;
+            display: flex;
+            max-width: 680px;
+            margin: 0 auto 16px auto;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 5px;
+            border: 1px solid var(--border);
+            gap: 4px;
+            box-shadow: var(--shadow-sm);
         }
+
         .tab-btn {
-            flex:1; min-height:44px; border:none; border-radius:8px;
-            font-weight:700; font-size:0.88rem; cursor:pointer;
-            color:#64748b; background:transparent;
-            transition:all 0.2s; display:flex; align-items:center;
-            justify-content:center; gap:7px;
+            flex: 1;
+            min-height: 42px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            letter-spacing: 0.1px;
         }
+
         .tab-btn.active {
-            background:var(--primary); color:#fff;
-            box-shadow:0 2px 8px rgba(30,58,138,0.25);
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(26,63,171,0.28);
         }
-        .tab-panel { display:none; }
-        .tab-panel.active { display:block; }
-        #tab-summary .summary-card {
-            background:#fff; border-radius:15px; padding:20px;
-            border:1px solid #BFDBFE; margin:0 auto 20px auto;
-            max-width:960px; overflow-x:auto;
+
+        .tab-btn:not(.active):hover {
+            background: var(--primary-light);
+            color: var(--primary);
         }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ═══════════════════════════════════════════
+           SUMMARY & DASHBOARD SHARED
+        ═══════════════════════════════════════════ */
+        .summary-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border);
+            margin: 0 auto 16px auto;
+            max-width: 960px;
+            overflow-x: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-card h3 {
+            margin: 0 0 16px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.1px;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            max-width: 960px;
+            margin: 0 auto 16px auto;
+        }
+
+        .sstat {
+            flex: 1;
+            min-width: 110px;
+            background: var(--surface);
+            padding: 16px 12px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sstat h3 {
+            margin: 0 0 4px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .sstat p {
+            margin: 0;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ═══════════════════════════════════════════
+           MINI BAR CHARTS (Dashboard)
+        ═══════════════════════════════════════════ */
+        .d-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+        .d-bar-label { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); min-width: 40px; text-align: right; }
+        .d-bar-track { flex: 1; background: var(--bg); border-radius: 99px; height: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .d-bar-fill  { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
+        .d-bar-count { font-size: 0.72rem; font-weight: 700; color: var(--primary); min-width: 26px; }
+
+        /* ═══════════════════════════════════════════
+           MODAL
+        ═══════════════════════════════════════════ */
+        #searchModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.75);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            padding: 15px;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .modal-content h3 {
+            margin: 0 0 16px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .search-item {
+            background: var(--bg);
+            padding: 14px;
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+        }
+
+        .search-item strong {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           TOAST
+        ═══════════════════════════════════════════ */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 22px;
+            border-radius: 99px;
+            color: white;
+            display: none;
+            z-index: 10001;
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ═══════════════════════════════════════════
+           VERSION TAG
+        ═══════════════════════════════════════════ */
+        .version-tag {
+            text-align: center;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin: 16px 0;
+            letter-spacing: 0.3px;
+        }
+
+        /* ═══════════════════════════════════════════
+           FILTER SELECTS (Summary tab)
+        ═══════════════════════════════════════════ */
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .filter-row select {
+            flex: 1;
+            min-width: 110px;
+            padding: 7px 28px 7px 10px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            font-size: 0.8rem;
+            background-color: var(--surface);
+            min-height: 36px;
+        }
+
+        .filter-clear-btn {
+            flex: none;
+            min-height: 36px;
+            padding: 7px 14px;
+            background: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            color: white;
+            cursor: pointer;
+            width: auto !important;
+        }
+        .filter-select {
+            flex: 1;
+            min-width: 110px;
+            min-height: 36px;
+            padding: 7px 28px 7px 10px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            font-size: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--surface);
+            color: var(--text-primary);
+        }
+
+        /* ═══════════════════════════════════════════
+           FORM TAB BACKGROUND GRADIENT
+        ═══════════════════════════════════════════ */
+        #tab-form {
+            background: linear-gradient(160deg, #EEF2FF 0%, #E0F2FE 40%, #ECFDF5 100%);
+            border-radius: var(--radius-lg);
+            padding: 16px 0 8px;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        /* ═══════════════════════════════════════════
+           SUMMARY TAB — scoped stats (override global .sstat)
+        ═══════════════════════════════════════════ */
         #tab-summary .summary-stats {
-            display:flex; gap:10px; flex-wrap:wrap;
-            max-width:960px; margin:0 auto 15px auto;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            max-width: 960px;
+            margin: 0 auto 16px auto;
         }
+
         #tab-summary .sstat {
-            flex:1; min-width:110px; background:#fff; padding:14px 10px;
-            border-radius:10px; text-align:center; border:1px solid #BFDBFE;
+            flex: 1;
+            min-width: 100px;
+            background: var(--surface);
+            padding: 14px 10px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
         }
-        #tab-summary .sstat h3 { margin:0 0 4px 0; font-size:1.4rem; color:var(--primary); }
-        #tab-summary .sstat p  { margin:0; font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase; }
-        /* Dashboard mini-bar charts */
-        .d-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-        .d-bar-label { font-size:0.75rem; font-weight:700; color:#374151; min-width:40px; text-align:right; }
-        .d-bar-track { flex:1; background:#e5e7eb; border-radius:99px; height:14px; overflow:hidden; }
-        .d-bar-fill  { height:100%; border-radius:99px; transition:width 0.5s ease; }
-        .d-bar-count { font-size:0.75rem; font-weight:700; color:#1E3A8A; min-width:30px; }
+
+        #tab-summary .sstat h3 {
+            margin: 0 0 4px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        #tab-summary .sstat p {
+            margin: 0;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #tab-summary .summary-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border);
+            margin: 0 auto 16px auto;
+            max-width: 960px;
+            overflow-x: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ═══════════════════════════════════════════
+           DASHBOARD TAB — scoped stats + KPI cards
+        ═══════════════════════════════════════════ */
+        #tab-dashboard .summary-stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            max-width: 960px;
+            margin: 0 auto 16px auto;
+        }
+
+        #tab-dashboard .sstat {
+            flex: 1;
+            min-width: 110px;
+            padding: 16px 12px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        #tab-dashboard .sstat h3 {
+            margin: 0 0 4px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        #tab-dashboard .sstat p {
+            margin: 0;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #tab-dashboard .summary-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border);
+            margin: 0 auto 16px auto;
+            max-width: 960px;
+            overflow-x: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Summary table */
+        .summary-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        #summaryTable thead tr {
+            background: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        #summaryTable thead th {
+            padding: 9px 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+            white-space: nowrap;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* Dashboard KPI card gradient backgrounds */
+        .kpi-total   { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); border: none !important; }
+        .kpi-boys    { background: linear-gradient(135deg, #0C4A6E, #0284C7); border: none !important; }
+        .kpi-girls   { background: linear-gradient(135deg, #831843, #DB2777); border: none !important; }
+        .kpi-orphan  { background: linear-gradient(135deg, #78350F, #D97706); border: none !important; }
+        .kpi-voc     { background: linear-gradient(135deg, #064E3B, #059669); border: none !important; }
+        .kpi-hostel  { background: linear-gradient(135deg, #4C1D95, #7C3AED); border: none !important; }
+        .kpi-bpl     { background: linear-gradient(135deg, #7F1D1D, #DC2626); border: none !important; }
+
+        #tab-dashboard .kpi-total h3, #tab-dashboard .kpi-boys h3,
+        #tab-dashboard .kpi-girls h3, #tab-dashboard .kpi-orphan h3,
+        #tab-dashboard .kpi-voc h3, #tab-dashboard .kpi-hostel h3,
+        #tab-dashboard .kpi-bpl h3 { color: #fff; }
+
+        #tab-dashboard .kpi-total p  { color: #bfdbfe; }
+        #tab-dashboard .kpi-boys p   { color: #bae6fd; }
+        #tab-dashboard .kpi-girls p  { color: #fbcfe8; }
+        #tab-dashboard .kpi-orphan p { color: #fde68a; }
+        #tab-dashboard .kpi-voc p    { color: #a7f3d0; }
+        #tab-dashboard .kpi-hostel p { color: #ddd6fe; }
+        #tab-dashboard .kpi-bpl p    { color: #fecaca; }
+
+        /* Table count text */
+        #tableCount {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            margin-bottom: 0;
+            font-weight: 500;
+        }
 
 
         /* ═══════════════════════════════════════════════
@@ -206,20 +829,29 @@
 <body>
 
 <div id="main-content">
-    <header><h2>EduData 2.0</h2></header>
+    <header>
+        <h2>🎓 EduData</h2>
+        <span class="header-badge">v 2.0</span>
+    </header>
 
     <!-- TAB BAR -->
     <div class="tab-bar">
-        <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">📋 Form</button>
-        <button class="tab-btn"        id="tabBtn2" onclick="switchTab(2)">📋 Summary</button>
-        <button class="tab-btn"        id="tabBtn3" onclick="switchTab(3)">📊 Dashboard</button>
+        <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">
+            <i class="fa-regular fa-file-lines"></i> Form
+        </button>
+        <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">
+            <i class="fa-solid fa-table-list"></i> Summary
+        </button>
+        <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">
+            <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </button>
     </div>
 
     <!-- ═══════ TAB 1: STUDENT DATA FORM ═══════ -->
     <div class="tab-panel active" id="tab-form">
 
     <div class="dashboard">
-        <div class="stat"><h3 id="totalStudents">0</h3><p>Total Students</p></div>
+        <div class="stat"><h3 id="totalStudents">0</h3><p>Total</p></div>
         <div class="stat"><h3 id="boys">0</h3><p>Boys</p></div>
         <div class="stat"><h3 id="girls">0</h3><p>Girls</p></div>
     </div>
@@ -321,13 +953,13 @@
             </div>
 
             <div class="btn-stack">
-                <button type="button" id="saveBtn"   class="btn-add"    onclick="handleSave()">💾 Save Record</button>
-                <button type="button" id="updateBtn" class="btn-update" onclick="handleUpdate()">✏️ Update Record</button>
-                <button type="button" class="btn-search" onclick="openSearch()">🔍 Search / Edit / Delete</button>
-                <button type="button" onclick="exportToExcel()" style="background:#065F46;">📤 Export to Excel</button>
-                <button type="button" onclick="importExcel()"   style="background:#0369A1;">📥 Import Excel</button>
-                <button type="button" onclick="printAll()"      style="background:#7C3AED;">🖨️ Print All Students</button>
-                <button type="button" class="btn-clear"         onclick="wipeDatabase()">🗑️ Wipe All Data</button>
+                <button type="button" id="saveBtn"   class="btn-add"    onclick="handleSave()"><i class="fa-solid fa-floppy-disk"></i> Save Record</button>
+                <button type="button" id="updateBtn" class="btn-update" onclick="handleUpdate()"><i class="fa-solid fa-pen"></i> Update Record</button>
+                <button type="button" class="btn-search" onclick="openSearch()"><i class="fa-solid fa-magnifying-glass"></i> Search / Edit / Delete</button>
+                <button type="button" onclick="exportToExcel()" style="background:var(--btn-export);box-shadow:0 2px 8px rgba(6,95,70,0.25);"><i class="fa-solid fa-file-arrow-up"></i> Export to Excel</button>
+                <button type="button" onclick="importExcel()"   style="background:var(--btn-import);box-shadow:0 2px 8px rgba(3,105,161,0.25);"><i class="fa-solid fa-file-arrow-down"></i> Import Excel</button>
+                <button type="button" onclick="printAll()"      style="background:var(--btn-print);box-shadow:0 2px 8px rgba(109,40,217,0.25);"><i class="fa-solid fa-print"></i> Print All Students</button>
+                <button type="button" class="btn-clear"         onclick="wipeDatabase()"><i class="fa-solid fa-trash"></i> Wipe All Data</button>
             </div>
         </form>
     </div>
@@ -351,19 +983,19 @@
 
         <!-- Filters + Table -->
         <div class="summary-card">
-            <h3 style="margin:0 0 12px 0;color:var(--primary);">📋 Student List</h3>
+            <h3 style="margin:0 0 12px 0;color:var(--text-primary);font-family:'Sora',sans-serif;font-size:0.92rem;font-weight:700;">Student List</h3>
 
             <!-- Filter Row -->
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center;">
-                <select id="tbl-class"    onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+            <div class="filter-row">
+                <select id="tbl-class"    onchange="renderClassTable()" class="filter-select">
                     <option value="">All Classes</option>
                     <option>IX</option><option>X</option><option>XI</option><option>XII</option>
                 </select>
-                <select id="tbl-div" onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-div" onchange="renderClassTable()" class="filter-select">
                     <option value="">All Divisions</option>
                     <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option><option>J</option><option>K</option><option>L</option><option>M</option><option>N</option><option>O</option><option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
                 </select>
-                <select id="tbl-year"     onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-year"     onchange="renderClassTable()" class="filter-select">
                     <option value="">All Years</option>
                     <option>2023-2024</option><option>2024-2025</option><option>2025-2026</option>
                     <option>2026-2027</option><option>2027-2028</option><option>2028-2029</option>
@@ -372,66 +1004,66 @@
                     <option>2035-2036</option><option>2036-2037</option><option>2037-2038</option>
                     <option>2038-2039</option><option>2039-2040</option>
                 </select>
-                <select id="tbl-gender"   onchange="renderClassTable()" style="flex:1;min-width:100px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-gender"   onchange="renderClassTable()" class="filter-select">
                     <option value="">All Gender</option>
                     <option>Male</option><option>Female</option>
                 </select>
-                <select id="tbl-voc"      onchange="renderClassTable()" style="flex:1;min-width:130px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-voc"      onchange="renderClassTable()" class="filter-select">
                     <option value="">Vocational: All</option>
                     <option value="Yes">Vocational: Yes</option>
                     <option value="No">Vocational: No</option>
                 </select>
-                <select id="tbl-orphan"   onchange="renderClassTable()" style="flex:1;min-width:120px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-orphan"   onchange="renderClassTable()" class="filter-select">
                     <option value="">Orphan: All</option>
                     <option value="Yes">Orphan: Yes</option>
                     <option value="No">Orphan: No</option>
                 </select>
-                <select id="tbl-hostel"   onchange="renderClassTable()" style="flex:1;min-width:120px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-hostel"   onchange="renderClassTable()" class="filter-select">
                     <option value="">Hostel: All</option>
                     <option value="Yes">Hostel: Yes</option>
                     <option value="No">Hostel: No</option>
                 </select>
-                <select id="tbl-aplbpl"   onchange="renderClassTable()" style="flex:1;min-width:110px;padding:7px 8px;border-radius:7px;border:1.5px solid #D1D5DB;font-size:0.82rem;">
+                <select id="tbl-aplbpl"   onchange="renderClassTable()" class="filter-select">
                     <option value="">APL/BPL: All</option>
                     <option value="APL">APL</option>
                     <option value="BPL">BPL</option>
                 </select>
-                <button onclick="clearTableFilters()" style="flex:none;min-height:36px;padding:7px 14px;background:#64748b;border-radius:7px;font-size:0.82rem;font-weight:700;border:none;color:white;cursor:pointer;">✕ Clear</button>
+                <button onclick="clearTableFilters()" class="filter-clear-btn"><i class="fa-solid fa-xmark"></i> Clear</button>
             </div>
 
             <!-- Scrollable Table — all fields -->
-            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:8px;">
+            <div class="summary-table-wrap">
                 <table id="summaryTable" style="min-width:1400px;width:100%;border-collapse:collapse;font-size:0.8rem;">
                     <thead>
-                        <tr style="background:#1E3A8A;color:white;position:sticky;top:0;">
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">#</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Class</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Div</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Roll</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">GR No</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Student Name</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Gender</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">DOB</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Caste</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Father</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Mother</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Mobile 1</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Mobile 2</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Aadhar</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Blood Grp</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Orphan</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Hostel</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">APL/BPL</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Vocational</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Voc Subject</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Acad. Year</th>
-                            <th style="padding:9px 7px;border:1px solid #3b5bdb;white-space:nowrap;">Address</th>
+                        <tr>
+                            <th>#</th>
+                            <th>Class</th>
+                            <th>Div</th>
+                            <th>Roll</th>
+                            <th>GR No</th>
+                            <th>Student Name</th>
+                            <th>Gender</th>
+                            <th>DOB</th>
+                            <th>Caste</th>
+                            <th>Father</th>
+                            <th>Mother</th>
+                            <th>Mobile 1</th>
+                            <th>Mobile 2</th>
+                            <th>Aadhar</th>
+                            <th>Blood Grp</th>
+                            <th>Orphan</th>
+                            <th>Hostel</th>
+                            <th>APL/BPL</th>
+                            <th>Vocational</th>
+                            <th>Voc Subject</th>
+                            <th>Acad. Year</th>
+                            <th>Address</th>
                         </tr>
                     </thead>
                     <tbody id="classTableBody"></tbody>
                 </table>
             </div>
-            <p id="tableCount" style="font-size:0.75rem;color:#64748b;margin-top:8px;margin-bottom:0;"></p>
+            <p id="tableCount"></p>
         </div>
 
     </div><!-- end #tab-summary -->
@@ -441,44 +1073,44 @@
 
         <!-- Row 1: Top KPI cards -->
         <div class="summary-stats" style="flex-wrap:wrap;">
-            <div class="sstat" style="background:linear-gradient(135deg,#1E3A8A,#2563EB);color:white;border:none;">
-                <h3 id="d-total" style="color:white;">0</h3><p style="color:#bfdbfe;">Total Students</p>
+            <div class="sstat kpi kpi-total">
+                <h3 id="d-total">0</h3><p>Total Students</p>
             </div>
-            <div class="sstat" style="background:linear-gradient(135deg,#0369a1,#0ea5e9);color:white;border:none;">
-                <h3 id="d-boys" style="color:white;">0</h3><p style="color:#bae6fd;">Boys</p>
+            <div class="sstat kpi kpi-boys">
+                <h3 id="d-boys">0</h3><p>Boys</p>
             </div>
-            <div class="sstat" style="background:linear-gradient(135deg,#be185d,#ec4899);color:white;border:none;">
-                <h3 id="d-girls" style="color:white;">0</h3><p style="color:#fbcfe8;">Girls</p>
+            <div class="sstat kpi kpi-girls">
+                <h3 id="d-girls">0</h3><p>Girls</p>
             </div>
-            <div class="sstat" style="background:linear-gradient(135deg,#b45309,#f59e0b);color:white;border:none;">
-                <h3 id="d-orphan" style="color:white;">0</h3><p style="color:#fde68a;">Orphan Students</p>
+            <div class="sstat kpi kpi-orphan">
+                <h3 id="d-orphan">0</h3><p>Orphan</p>
             </div>
-            <div class="sstat" style="background:linear-gradient(135deg,#065f46,#10b981);color:white;border:none;">
-                <h3 id="d-voc" style="color:white;">0</h3><p style="color:#a7f3d0;">Vocational Students</p>
+            <div class="sstat kpi kpi-voc">
+                <h3 id="d-voc">0</h3><p>Vocational</p>
             </div>
-            <div class="sstat" style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:white;border:none;">
-                <h3 id="d-hostel" style="color:white;">0</h3><p style="color:#ddd6fe;">Hostel Students</p>
+            <div class="sstat kpi kpi-hostel">
+                <h3 id="d-hostel">0</h3><p>Hostel</p>
             </div>
-            <div class="sstat" style="background:linear-gradient(135deg,#7f1d1d,#ef4444);color:white;border:none;">
-                <h3 id="d-bpl" style="color:white;">0</h3><p style="color:#fecaca;">BPL Students</p>
+            <div class="sstat kpi kpi-bpl">
+                <h3 id="d-bpl">0</h3><p>BPL</p>
             </div>
         </div>
 
         <!-- Row 2: Class-wise breakdown table -->
         <div class="summary-card">
-            <h3 style="margin:0 0 14px 0;color:var(--primary);">🏫 Class-wise Breakdown</h3>
+            <h3 style="margin:0 0 14px 0;color:var(--text-primary);font-family:'Sora',sans-serif;font-size:0.92rem;font-weight:700;">Class-wise Breakdown</h3>
             <div style="overflow-x:auto;">
                 <table style="width:100%;border-collapse:collapse;font-size:0.88rem;min-width:500px;">
                     <thead>
-                        <tr style="background:#EFF6FF;">
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:left;">Class</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">Total</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">Boys</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">Girls</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">Orphan</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">Vocational</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">Hostel</th>
-                            <th style="padding:10px 8px;border:1px solid #ccc;text-align:center;">BPL</th>
+                        <tr style="background:var(--primary-light);">
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:left;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Class</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Total</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Boys</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Girls</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Orphan</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Vocational</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">Hostel</th>
+                            <th style="padding:10px 8px;border:1px solid var(--border);text-align:center;color:var(--primary);font-size:0.78rem;letter-spacing:0.4px;">BPL</th>
                         </tr>
                     </thead>
                     <tbody id="d-classrows"></tbody>
@@ -491,19 +1123,19 @@
 
             <!-- Blood Group breakdown -->
             <div class="summary-card" style="flex:1;min-width:240px;margin:0;">
-                <h3 style="margin:0 0 12px 0;color:var(--primary);font-size:0.95rem;">🩸 Blood Group Distribution</h3>
+                <h3 style="margin:0 0 14px 0;color:var(--text-primary);font-family:'Sora',sans-serif;font-size:0.88rem;font-weight:700;">Blood Group Distribution</h3>
                 <div id="d-blood"></div>
             </div>
 
             <!-- APL vs BPL -->
             <div class="summary-card" style="flex:1;min-width:240px;margin:0;">
-                <h3 style="margin:0 0 12px 0;color:var(--primary);font-size:0.95rem;">📂 APL vs BPL</h3>
+                <h3 style="margin:0 0 14px 0;color:var(--text-primary);font-family:'Sora',sans-serif;font-size:0.88rem;font-weight:700;">APL vs BPL</h3>
                 <div id="d-aplbpl"></div>
             </div>
 
             <!-- Vocational subjects -->
             <div class="summary-card" style="flex:1;min-width:240px;margin:0;">
-                <h3 style="margin:0 0 12px 0;color:var(--primary);font-size:0.95rem;">🎓 Vocational Subjects</h3>
+                <h3 style="margin:0 0 14px 0;color:var(--text-primary);font-family:'Sora',sans-serif;font-size:0.88rem;font-weight:700;">Vocational Subjects</h3>
                 <div id="d-vocsubjects"></div>
             </div>
 
@@ -529,7 +1161,7 @@
         </select>
         <input type="text" id="searchInput" placeholder="Search by name or roll no..." onkeyup="performSearch()">
         <div id="searchResults" style="margin-top:15px;max-height:400px;overflow-y:auto;"></div>
-        <button onclick="closeSearch()" style="background:#6B7280;width:100%;margin-top:10px;color:white;border:none;height:45px;border-radius:10px;">Close</button>
+        <button onclick="closeSearch()" style="background:var(--text-secondary);width:100%;margin-top:12px;color:white;border:none;height:44px;border-radius:var(--radius-md);font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;">Close</button>
     </div>
 </div>
 
