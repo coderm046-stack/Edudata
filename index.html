@@ -1561,15 +1561,19 @@
                 let imported = 0, skipped = 0;
 
                 // FIX: Generate a unique base ID ONCE before the loop.
-                // Using Date.now() inside the loop returns the same ms value
-                // for every row (loop is fast), and the old random offset
-                // could still produce collisions between rows — causing
-                // db.find() to return the wrong student when editing.
-                const importIdBase = Date.now() * 10000;
+                // CRITICAL: Date.now() * 10000 overflows Number.MAX_SAFE_INTEGER
+                // (9_007_199_254_740_991), causing floating-point rounding that
+                // makes multiple rows share the same ID — which is why clicking
+                // Edit loaded the wrong student. We now use Date.now() alone
+                // (safe, ~13 digits) and ensure we start above any existing ID.
+                const maxExistingId = db.length
+                    ? Math.max(...db.map(s => Number(s.id) || 0))
+                    : 0;
+                const importIdBase = Math.max(Date.now(), maxExistingId + 1);
 
                 rows.forEach((row, i) => {
                     const record = {
-                        id   : importIdBase + i,   // guaranteed unique: same base + unique index
+                        id   : importIdBase + i,   // guaranteed unique: safe base + unique index
                         photo: ''
                     };
                     let hasData = false;
@@ -1676,9 +1680,27 @@
             return fixed;
         });
 
+        // ── Repair duplicate IDs (caused by the old Date.now()*10000 overflow bug) ──
+        // Any two records sharing the same id cause startEdit() to always load
+        // the first match — making it look like the wrong student was selected.
+        const seenIds = new Set();
+        let repairBase = Date.now();
+        db = db.map(s => {
+            const sid = Number(s.id) || 0;
+            if (!sid || seenIds.has(sid)) {
+                while (seenIds.has(repairBase)) repairBase++;
+                const newId = repairBase++;
+                seenIds.add(newId);
+                changed++;
+                return Object.assign({}, s, { id: newId });
+            }
+            seenIds.add(sid);
+            return s;
+        });
+
         if (changed > 0) {
             localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
-            console.log(`Fixed ${changed} dropdown values in existing data.`);
+            console.log(`Fixed ${changed} issues (dropdown values + duplicate IDs) in existing data.`);
         }
     }
 
