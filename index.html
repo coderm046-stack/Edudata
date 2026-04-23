@@ -1425,10 +1425,17 @@
             ? `<img src="${s.photo}" class="print-photo">`
             : `<div class="print-photo-placeholder">AFFIX<br>PHOTO</div>`;
 
+        const DATE_PRINT_FIELDS = ['DOA','DOB_LC','DOB_AADHAR'];
+        function fmtPrintDate(v) {
+            if (!v) return '-';
+            const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
+        }
+
         const cells = FIELDS.map(f => `
             <div class="print-cell">
                 <span class="print-label">${f.replace(/_/g,' ')}</span>
-                <span class="print-value">${s[f] || '-'}</span>
+                <span class="print-value">${DATE_PRINT_FIELDS.includes(f) ? fmtPrintDate(s[f]) : (s[f] || '-')}</span>
             </div>`).join('');
 
         return `
@@ -1583,11 +1590,31 @@
                         if (!mapped) return;
                         let val = row[col];
 
-                        /* Date objects → YYYY-MM-DD */
-                        if (val instanceof Date && !isNaN(val)) {
-                            val = val.getFullYear() + '-' +
-                                  String(val.getMonth()+1).padStart(2,'0') + '-' +
-                                  String(val.getDate()).padStart(2,'0');
+                        /* Normalise all date values → YYYY-MM-DD (required by HTML date inputs) */
+                        const DATE_IMPORT_FIELDS = ['DOA','DOB_LC','DOB_AADHAR'];
+                        if (DATE_IMPORT_FIELDS.includes(mapped)) {
+                            if (val instanceof Date && !isNaN(val)) {
+                                // SheetJS Date object
+                                val = val.getFullYear() + '-' +
+                                      String(val.getMonth()+1).padStart(2,'0') + '-' +
+                                      String(val.getDate()).padStart(2,'0');
+                            } else {
+                                const s = String(val).trim();
+                                // DD/MM/YYYY or DD-MM-YYYY → YYYY-MM-DD
+                                const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                                // YYYY/MM/DD → YYYY-MM-DD
+                                const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+                                if (dmy) {
+                                    val = `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+                                } else if (ymd) {
+                                    val = `${ymd[1]}-${ymd[2].padStart(2,'0')}-${ymd[3].padStart(2,'0')}`;
+                                } else {
+                                    val = s;
+                                }
+                            }
+                        } else if (val instanceof Date && !isNaN(val)) {
+                            // Non-date field that SheetJS parsed as Date — convert to string
+                            val = val.toLocaleDateString('en-GB'); // DD/MM/YYYY fallback
                         } else {
                             val = String(val).trim();
                         }
@@ -1664,12 +1691,33 @@
             return raw||'';
         }
 
+        // Normalise date fields to YYYY-MM-DD (handles DD/MM/YYYY, YYYY/MM/DD, DD-MM-YYYY stored by older versions)
+        const DATE_FIX_FIELDS = ['DOA','DOB_LC','DOB_AADHAR'];
+        function normDate(v) {
+            if (!v) return v;
+            const s = String(v).trim();
+            // Already YYYY-MM-DD → keep
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            // DD/MM/YYYY or DD-MM-YYYY → YYYY-MM-DD
+            const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+            if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+            // YYYY/MM/DD → YYYY-MM-DD
+            const ymd = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+            if (ymd) return `${ymd[1]}-${ymd[2].padStart(2,'0')}-${ymd[3].padStart(2,'0')}`;
+            return v; // unrecognised — leave unchanged
+        }
+
         let changed = 0;
         db = db.map(s => {
             const fixed = Object.assign({}, s);
             ['GENDER','HOSTEL_STUDENT','ORPHAN','VOC_STATUS','CLASS','APL_BPL','BLOOD_GROUP'].forEach(f => {
                 const orig = fixed[f];
                 fixed[f] = nd(f, fixed[f]);
+                if (fixed[f] !== orig) changed++;
+            });
+            DATE_FIX_FIELDS.forEach(f => {
+                const orig = fixed[f];
+                fixed[f] = normDate(fixed[f]);
                 if (fixed[f] !== orig) changed++;
             });
             // Default empty yes/no fields to 'No'
@@ -1925,7 +1973,7 @@
         if (!db.length) { showToast('No data to export!','#F59E0B'); return; }
 
         // Date fields stored internally as YYYY-MM-DD — convert to DD/MM/YYYY for export
-        const DATE_FIELDS = ['DOB_LC'];
+        const DATE_FIELDS = ['DOA', 'DOB_LC', 'DOB_AADHAR'];
         function fmtExportDate(v) {
             if (!v) return '';
             const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
