@@ -42,6 +42,7 @@
             --btn-export: #065F46;
             --btn-import: #0369A1;
             --btn-print:  #6D28D9;
+            --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
             --shadow-sm: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
@@ -762,6 +763,152 @@
             font-weight: 500;
         }
 
+        /* ═══════════════════════════════════════════
+           COLUMN PICKER
+        ═══════════════════════════════════════════ */
+        .col-picker-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .col-picker-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: auto !important;
+            min-height: 36px;
+            transition: opacity 0.15s;
+        }
+
+        .col-picker-btn:hover { opacity: 0.88; }
+
+        .col-picker-panel {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            background: var(--surface);
+            border: 1.5px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 14px;
+            width: 340px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .col-picker-panel.open { display: block; }
+
+        .col-picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .col-picker-header span {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Sora', sans-serif;
+        }
+
+        .col-picker-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .col-picker-actions button {
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            min-height: unset;
+            width: auto !important;
+        }
+
+        .col-picker-sel-all { background: var(--secondary); color: white; }
+        .col-picker-clear   { background: var(--error);     color: white; }
+
+        .col-picker-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+
+        .col-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1.5px solid var(--border);
+            background: #f8faff;
+            user-select: none;
+        }
+
+        .col-picker-item:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .col-picker-item.active {
+            background: var(--primary);
+            border-color: var(--primary-dark);
+            color: white;
+        }
+
+        .col-picker-item.active:hover {
+            background: var(--primary-dark);
+        }
+
+        .col-picker-item .cp-icon {
+            font-size: 0.65rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1.5px solid var(--border-strong);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: transparent;
+            transition: all 0.15s;
+        }
+
+        .col-picker-item.active .cp-icon {
+            background: white;
+            border-color: rgba(255,255,255,0.6);
+            color: var(--primary);
+        }
+
+        .col-picker-item .cp-label {
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            line-height: 1.2;
+            transition: color 0.15s;
+        }
+
+        .col-picker-item.active .cp-label {
+            color: white;
+        }
+
 
         /* ═══════════════════════════════════════════════
            PRINT STYLES
@@ -1105,41 +1252,32 @@
                 <button onclick="clearTableFilters()" class="filter-clear-btn"><i class="fa-solid fa-xmark"></i> Clear</button>
             </div>
 
-            <!-- Scrollable Table — all fields -->
+            <!-- Column Picker + Scrollable Table -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                <span id="tableCount" style="font-size:0.72rem;color:var(--text-muted);font-weight:500;"></span>
+                <div class="col-picker-wrap">
+                    <button class="col-picker-btn" onclick="toggleColPicker(event)">
+                        <i class="fa-solid fa-table-columns"></i> Choose Columns
+                    </button>
+                    <div class="col-picker-panel" id="colPickerPanel">
+                        <div class="col-picker-header">
+                            <span>Select Columns &nbsp;<span id="cpCount" style="background:var(--primary);color:white;border-radius:99px;padding:1px 7px;font-size:0.68rem;font-weight:700;"></span></span>
+                            <div class="col-picker-actions">
+                                <button class="col-picker-sel-all" onclick="setAllCols(true)">All</button>
+                                <button class="col-picker-clear"   onclick="setAllCols(false)">None</button>
+                            </div>
+                        </div>
+                        <div class="col-picker-grid" id="colPickerGrid"></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="summary-table-wrap">
-                <table id="summaryTable" style="min-width:1600px;width:100%;border-collapse:collapse;font-size:0.8rem;">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Class</th>
-                            <th>Div</th>
-                            <th>Roll</th>
-                            <th>GR No</th>
-                            <th>Student Name</th>
-                            <th>Gender</th>
-                            <th>DOB</th>
-                            <th>Caste</th>
-                            <th>Father</th>
-                            <th>Mother</th>
-                            <th>Mobile 1</th>
-                            <th>Mobile 2</th>
-                            <th>Aadhar</th>
-                            <th>PEN</th>
-                            <th>APAAR ID</th>
-                            <th>Blood Grp</th>
-                            <th>Orphan</th>
-                            <th>Hostel</th>
-                            <th>APL/BPL</th>
-                            <th>Vocational</th>
-                            <th>Voc Subject</th>
-                            <th>Acad. Year</th>
-                            <th>Address</th>
-                        </tr>
-                    </thead>
+                <table id="summaryTable" style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                    <thead><tr id="summaryTableHead"></tr></thead>
                     <tbody id="classTableBody"></tbody>
                 </table>
             </div>
-            <p id="tableCount"></p>
         </div>
 
     </div><!-- end #tab-summary -->
@@ -1784,8 +1922,134 @@
         renderClassTable();
     }
 
+    /* ─── All column definitions (order = display order) ─── */
+    const TABLE_COLS = [
+        { key: '#',              label: '#',              center: true,  special: 'serial'  },
+        { key: 'CLASS',          label: 'Class',          center: true                      },
+        { key: 'DIVISION',       label: 'Div',            center: true                      },
+        { key: 'ROLL_NO',        label: 'Roll',           center: true                      },
+        { key: 'GR_NO',          label: 'GR No',          center: true                      },
+        { key: 'STUDENT_NAME',   label: 'Student Name',                  special: 'name'   },
+        { key: 'GENDER',         label: 'Gender',         center: true                      },
+        { key: 'DOB_LC',         label: 'DOB (LC)',       center: true,  date: true         },
+        { key: 'DOA',            label: 'DOA',            center: true,  date: true         },
+        { key: 'POB',            label: 'Place of Birth', center: true                      },
+        { key: 'CASTE',          label: 'Caste',          center: true                      },
+        { key: 'FATHER_NAME',    label: 'Father Name'                                       },
+        { key: 'MOTHER_NAME',    label: 'Mother Name'                                       },
+        { key: 'MOBILE_1',       label: 'Mobile 1',       center: true                      },
+        { key: 'MOBILE_2',       label: 'Mobile 2',       center: true                      },
+        { key: 'EMAIL_ID',       label: 'Email'                                              },
+        { key: 'AADHAR_NO',      label: 'Aadhar No',      center: true                      },
+        { key: 'NAME_AADHAR',    label: 'Name (Aadhar)'                                     },
+        { key: 'DOB_AADHAR',     label: 'DOB (Aadhar)',   center: true,  date: true         },
+        { key: 'PREV_SCHOOL',    label: 'Prev. School'                                      },
+        { key: 'BANK_ACC',       label: 'Bank A/C',       center: true                      },
+        { key: 'BANK_NAME',      label: 'Bank Name'                                         },
+        { key: 'IFSC',           label: 'IFSC',           center: true                      },
+        { key: 'PEN',            label: 'PEN',            center: true                      },
+        { key: 'APAAR',          label: 'APAAR ID',       center: true,  special: 'apaar'  },
+        { key: 'BLOOD_GROUP',    label: 'Blood Grp',      center: true                      },
+        { key: 'ORPHAN',         label: 'Orphan',         center: true,  special: 'orphan' },
+        { key: 'HOSTEL_STUDENT', label: 'Hostel',         center: true,  special: 'hostel' },
+        { key: 'APL_BPL',        label: 'APL/BPL',        center: true                      },
+        { key: 'HEIGHT',         label: 'Height',         center: true                      },
+        { key: 'WEIGHT',         label: 'Weight',         center: true                      },
+        { key: 'PERCENTAGE',     label: '%',              center: true                      },
+        { key: 'DISTANCE',       label: 'Distance',       center: true                      },
+        { key: 'VOC_STATUS',     label: 'Vocational',     center: true,  special: 'voc'    },
+        { key: 'VOC_NAME',       label: 'Voc Subject'                                       },
+        { key: 'ACADEMIC_YEAR',  label: 'Acad. Year',     center: true                      },
+        { key: 'ADDRESS',        label: 'Address',                       special: 'address' },
+        { key: 'REMARK',         label: 'Remark'                                            },
+    ];
+
+    /* Keys that are visible by default — all of them */
+    let visibleCols = new Set(TABLE_COLS.map(c => c.key));
+
+    /* Build the column-picker checkboxes (called once on first Summary tab visit) */
+    let colPickerBuilt = false;
+    function buildColPicker() {
+        if (colPickerBuilt) return;
+        colPickerBuilt = true;
+        const grid = document.getElementById('colPickerGrid');
+        grid.innerHTML = TABLE_COLS.map(c => {
+            const isActive = visibleCols.has(c.key);
+            return `<div class="col-picker-item${isActive ? ' active' : ''}" id="cpi_${c.key}"
+                        onclick="onColToggle('${c.key}')">
+                        <span class="cp-icon"><i class="fa-solid fa-check" style="font-size:0.6rem;"></i></span>
+                        <span class="cp-label">${c.label}</span>
+                    </div>`;
+        }).join('');
+    }
+
+    function onColToggle(key) {
+        const isNowActive = visibleCols.has(key);
+        visibleCols[isNowActive ? 'delete' : 'add'](key);
+        const chip = document.getElementById('cpi_' + key);
+        if (chip) chip.classList.toggle('active', !isNowActive);
+        renderClassTable();
+    }
+
+    function setAllCols(show) {
+        TABLE_COLS.forEach(c => {
+            visibleCols[show ? 'add' : 'delete'](c.key);
+            const chip = document.getElementById('cpi_' + c.key);
+            if (chip) chip.classList.toggle('active', show);
+        });
+        renderClassTable();
+    }
+
+    function toggleColPicker(e) {
+        e.stopPropagation();
+        buildColPicker();
+        const panel = document.getElementById('colPickerPanel');
+        const isOpen = panel.classList.contains('open');
+        if (isOpen) { panel.classList.remove('open'); return; }
+
+        const btn    = e.currentTarget;
+        const rect   = btn.getBoundingClientRect();
+        const margin = 10;
+        const panelW = 340;
+
+        /* Horizontal: align right edge of panel to right edge of button, never off-screen */
+        let left = rect.right - panelW;
+        if (left < margin) left = margin;
+        panel.style.left = left + 'px';
+
+        /* Vertical: measure space above & below, open toward the larger side */
+        const spaceBelow = window.innerHeight - rect.bottom - margin;
+        const spaceAbove = rect.top - margin;
+
+        if (spaceBelow >= spaceAbove) {
+            /* Open downward — cap height to whatever fits */
+            panel.style.top    = (rect.bottom + 6) + 'px';
+            panel.style.bottom = 'auto';
+            panel.style.maxHeight = Math.max(180, spaceBelow) + 'px';
+        } else {
+            /* Open upward — cap height to whatever fits above */
+            panel.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+            panel.style.top    = 'auto';
+            panel.style.maxHeight = Math.max(180, spaceAbove) + 'px';
+        }
+
+        panel.classList.add('open');
+    }
+
+    /* Stop clicks INSIDE the panel from bubbling up to the document close-listener */
+    document.getElementById('colPickerPanel').addEventListener('click', e => e.stopPropagation());
+
+    /* Close picker when clicking outside */
+    document.addEventListener('click', () => {
+        document.getElementById('colPickerPanel')?.classList.remove('open');
+    });
+
     function renderClassTable() {
         if (typeof db === 'undefined') return;
+
+        /* Ensure col picker is built if Summary tab is active */
+        buildColPicker();
+
         const fCls    = document.getElementById('tbl-class').value;
         const fDiv    = document.getElementById('tbl-div').value;
         const fYear   = document.getElementById('tbl-year').value;
@@ -1814,68 +2078,75 @@
             return true;
         });
 
-        // Convert YYYY-MM-DD → DD/MM/YYYY for display
+        /* Active columns in display order */
+        const activeCols = TABLE_COLS.filter(c => visibleCols.has(c.key));
+
+        /* Convert YYYY-MM-DD → DD/MM/YYYY for display */
         const fmtDate = v => {
             if (!v) return '-';
             const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
             return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
         };
 
-        const td = (val, center) =>
-            `<td style="padding:7px 8px;border:1px solid #e2e8f0;white-space:nowrap;${center?'text-align:center;':''}">${val||'-'}</td>`;
+        /* Build header */
+        document.getElementById('summaryTableHead').innerHTML =
+            activeCols.map(c =>
+                `<th style="padding:9px 8px;border:1px solid rgba(255,255,255,0.15);white-space:nowrap;font-size:0.75rem;font-weight:600;letter-spacing:0.3px;${c.center?'text-align:center;':''}">${c.label}</th>`
+            ).join('');
 
+        /* Cell renderer per column */
+        function renderCell(col, r, idx) {
+            const p = `padding:7px 8px;border:1px solid #e2e8f0;`;
+            const c = col.center ? 'text-align:center;' : '';
+            const w = `white-space:nowrap;`;
+
+            switch (col.special) {
+                case 'serial':
+                    return `<td style="${p}${c}${w}">${idx+1}</td>`;
+                case 'name':
+                    return `<td style="${p}font-weight:600;${w}">${r.STUDENT_NAME||'-'}</td>`;
+                case 'apaar':
+                    return `<td style="${p}${c}${w}">${r.APAAR
+                        ? `<span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;background:#eff6ff;color:#1e40af;">${r.APAAR}</span>`
+                        : '<span style="color:#94a3b8;font-size:0.75rem;">-</span>'}</td>`;
+                case 'orphan':
+                    return `<td style="${p}${c}${w}"><span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
+                        background:${r.ORPHAN==='Yes'?'#fef3c7':'#f0fdf4'};
+                        color:${r.ORPHAN==='Yes'?'#92400e':'#166534'};">${r.ORPHAN||'No'}</span></td>`;
+                case 'hostel':
+                    return `<td style="${p}${c}${w}"><span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
+                        background:${r.HOSTEL_STUDENT==='Yes'?'#eff6ff':'#f9fafb'};
+                        color:${r.HOSTEL_STUDENT==='Yes'?'#1e40af':'#6b7280'};">${r.HOSTEL_STUDENT==='Yes'?'Yes':'No'}</span></td>`;
+                case 'voc':
+                    return `<td style="${p}${c}${w}"><span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
+                        background:${r.VOC_STATUS==='Yes'?'#f0fdf4':'#f9fafb'};
+                        color:${r.VOC_STATUS==='Yes'?'#166534':'#6b7280'};">${r.VOC_STATUS||'No'}</span></td>`;
+                case 'address':
+                    return `<td style="${p}max-width:160px;white-space:normal;">${r.ADDRESS||'-'}</td>`;
+                default:
+                    const val = col.date ? fmtDate(r[col.key]) : (r[col.key]||'-');
+                    return `<td style="${p}${c}${w}">${val}</td>`;
+            }
+        }
+
+        const colCount = activeCols.length || 1;
         document.getElementById('classTableBody').innerHTML = rows.length
-            ? rows.map((r,i) => `
-                <tr style="background:${i%2===0?'#fff':'#F8FAFF'};">
-                    ${td(i+1,true)}
-                    ${td(r.CLASS,true)}
-                    ${td(r.DIVISION,true)}
-                    ${td(r.ROLL_NO,true)}
-                    ${td(r.GR_NO,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;font-weight:600;white-space:nowrap;">${r.STUDENT_NAME||'-'}</td>
-                    ${td(r.GENDER,true)}
-                    ${td(fmtDate(r.DOB_LC),true)}
-                    ${td(r.CASTE,true)}
-                    ${td(r.FATHER_NAME)}
-                    ${td(r.MOTHER_NAME)}
-                    ${td(r.MOBILE_1,true)}
-                    ${td(r.MOBILE_2,true)}
-                    ${td(r.AADHAR_NO,true)}
-                    ${td(r.PEN,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;white-space:nowrap;text-align:center;">
-                        ${r.APAAR ? `<span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;background:#eff6ff;color:#1e40af;">${r.APAAR}</span>` : '<span style="color:#94a3b8;font-size:0.75rem;">-</span>'}
-                    </td>
-                    ${td(r.BLOOD_GROUP,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
-                        <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                            background:${r.ORPHAN==='Yes'?'#fef3c7':'#f0fdf4'};
-                            color:${r.ORPHAN==='Yes'?'#92400e':'#166534'};">
-                            ${r.ORPHAN||'No'}
-                        </span>
-                    </td>
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
-                        <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                            background:${r.HOSTEL_STUDENT==='Yes'?'#eff6ff':'#f9fafb'};
-                            color:${r.HOSTEL_STUDENT==='Yes'?'#1e40af':'#6b7280'};">
-                            ${r.HOSTEL_STUDENT==='Yes'?'Yes':'No'}
-                        </span>
-                    </td>
-                    ${td(r.APL_BPL,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
-                        <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                            background:${r.VOC_STATUS==='Yes'?'#f0fdf4':'#f9fafb'};
-                            color:${r.VOC_STATUS==='Yes'?'#166534':'#6b7280'};">
-                            ${r.VOC_STATUS||'No'}
-                        </span>
-                    </td>
-                    ${td(r.VOC_NAME)}
-                    ${td(r.ACADEMIC_YEAR,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;max-width:160px;white-space:normal;">${r.ADDRESS||'-'}</td>
-                </tr>`).join('')
-            : `<tr><td colspan="24" style="text-align:center;padding:25px;color:#888;">No records match the selected filters.</td></tr>`;
+            ? rows.map((r, i) =>
+                `<tr style="background:${i%2===0?'#fff':'#F8FAFF'};">${
+                    activeCols.map(c => renderCell(c, r, i)).join('')
+                }</tr>`).join('')
+            : `<tr><td colspan="${colCount}" style="text-align:center;padding:25px;color:#888;">No records match the selected filters.</td></tr>`;
+
+        /* Update min-width based on visible column count */
+        document.getElementById('summaryTable').style.minWidth =
+            Math.max(400, activeCols.length * 110) + 'px';
 
         document.getElementById('tableCount').textContent =
-            `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''}`;
+            `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''} · ${activeCols.length} column${activeCols.length!==1?'s':''} visible`;
+
+        /* Update picker badge count */
+        const badge = document.getElementById('cpCount');
+        if (badge) badge.textContent = `${visibleCols.size} / ${TABLE_COLS.length}`;
     }
 
     /* ══════════════════════════════════════════════════════
