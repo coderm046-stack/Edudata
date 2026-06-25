@@ -12,10 +12,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="EduData">
-    <!-- Font Awesome: non-blocking (preload → swap to stylesheet) -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-    <!-- SheetJS is loaded ON DEMAND (import/export only) — NOT at startup -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -44,7 +42,6 @@
             --btn-export: #065F46;
             --btn-import: #0369A1;
             --btn-print:  #6D28D9;
-            --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
             --shadow-sm: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
@@ -225,6 +222,12 @@
         }
 
         .up { text-transform: uppercase; }
+
+        label .req {
+            color: var(--error);
+            font-weight: 700;
+            margin-left: 2px;
+        }
 
         /* ═══════════════════════════════════════════
            FORM GRID
@@ -492,83 +495,6 @@
         }
 
         /* ═══════════════════════════════════════════
-           ACTION BAR (Search / Edit / Delete)
-        ═══════════════════════════════════════════ */
-        .action-bar {
-            display: flex;
-            gap: 8px;
-            max-width: 680px;
-            margin: 0 auto 14px auto;
-        }
-
-        .action-btn {
-            flex: 1;
-            min-height: 40px;
-            border: none;
-            border-radius: 99px;
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 700;
-            font-size: 0.82rem;
-            cursor: pointer;
-            color: white;
-            letter-spacing: 0.3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: opacity 0.15s, transform 0.12s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        }
-
-        .action-btn:active { transform: scale(0.97); }
-
-        .action-btn-search { background: #5B21B6; }
-        .action-btn-search:hover { opacity: 0.88; }
-
-        .action-btn-edit   { background: #16A34A; }
-        .action-btn-edit:hover { opacity: 0.88; }
-
-        .action-btn-delete { background: #DC2626; }
-        .action-btn-delete:hover { opacity: 0.88; }
-
-        /* Modal mode banner */
-        #modalModeBanner {
-            display: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        /* ═══════════════════════════════════════════
-           LOADING OVERLAY
-        ═══════════════════════════════════════════ */
-        #app-loader {
-            position: fixed; inset: 0; z-index: 99999;
-            background: #F1F5FB;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 16px;
-            transition: opacity 0.35s ease;
-        }
-        #app-loader.hidden { opacity: 0; pointer-events: none; }
-        .loader-spinner {
-            width: 44px; height: 44px;
-            border: 4px solid #C7D7FF;
-            border-top-color: #1A3FAB;
-            border-radius: 50%;
-            animation: spin 0.75s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loader-text {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.88rem; font-weight: 600;
-            color: #475569; letter-spacing: 0.3px;
-        }
-
-        /* ═══════════════════════════════════════════
            VERSION TAG
         ═══════════════════════════════════════════ */
         .version-tag {
@@ -792,150 +718,262 @@
         }
 
         /* ═══════════════════════════════════════════
-           COLUMN PICKER
+           COLUMN SELECTOR MODAL
         ═══════════════════════════════════════════ */
-        .col-picker-wrap {
-            position: relative;
-            display: inline-block;
-        }
-
-        .col-picker-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 7px 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: auto !important;
-            min-height: 36px;
-            transition: opacity 0.15s;
-        }
-
-        .col-picker-btn:hover { opacity: 0.88; }
-
-        .col-picker-panel {
+        #columnModal {
             display: none;
             position: fixed;
-            z-index: 9999;
-            background: var(--surface);
-            border: 1.5px solid var(--border-strong);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            padding: 14px;
-            width: 340px;
+            inset: 0;
+            background: rgba(15,23,42,0.75);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            padding: 15px;
+            justify-content: center;
+            align-items: flex-start;
             overflow-y: auto;
-            overflow-x: hidden;
         }
 
-        .col-picker-panel.open { display: block; }
-
-        .col-picker-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
+        .col-modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+            margin-top: 24px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
         }
 
-        .col-picker-header span {
-            font-size: 0.78rem;
+        .col-modal-content h3 {
+            margin: 0 0 16px 0;
+            font-family: 'Sora', sans-serif;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--text-primary);
-            font-family: 'Sora', sans-serif;
         }
 
-        .col-picker-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .col-picker-actions button {
-            padding: 3px 10px;
-            border-radius: 99px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            min-height: unset;
-            width: auto !important;
-        }
-
-        .col-picker-sel-all { background: var(--secondary); color: white; }
-        .col-picker-clear   { background: var(--error);     color: white; }
-
-        .col-picker-grid {
+        .col-checkbox-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 5px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
-        .col-picker-item {
+        .col-checkbox-item {
             display: flex;
             align-items: center;
-            gap: 7px;
-            padding: 6px 10px;
-            border-radius: 7px;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
             cursor: pointer;
             transition: all 0.15s;
-            border: 1.5px solid var(--border);
-            background: #f8faff;
             user-select: none;
         }
 
-        .col-picker-item:hover {
-            border-color: var(--primary);
+        .col-checkbox-item:hover {
             background: var(--primary-light);
+            border-color: var(--primary);
         }
 
-        .col-picker-item.active {
-            background: var(--primary);
-            border-color: var(--primary-dark);
-            color: white;
+        .col-checkbox-item.selected {
+            background: var(--primary-light);
+            border-color: var(--primary);
         }
 
-        .col-picker-item.active:hover {
-            background: var(--primary-dark);
-        }
-
-        .col-picker-item .cp-icon {
-            font-size: 0.65rem;
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-            border: 1.5px solid var(--border-strong);
-            background: white;
+        .col-checkbox-item .check-box {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            border-radius: 5px;
+            border: 2px solid var(--border-strong);
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
-            color: transparent;
             transition: all 0.15s;
-        }
-
-        .col-picker-item.active .cp-icon {
             background: white;
-            border-color: rgba(255,255,255,0.6);
-            color: var(--primary);
         }
 
-        .col-picker-item .cp-label {
-            font-size: 0.73rem;
-            font-weight: 600;
+        .col-checkbox-item.selected .check-box {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .col-checkbox-item .check-box svg {
+            width: 12px;
+            height: 12px;
+            display: none;
+        }
+
+        .col-checkbox-item.selected .check-box svg {
+            display: block;
+        }
+
+        .col-checkbox-item label {
+            font-size: 0.78rem;
+            font-weight: 500;
             color: var(--text-secondary);
-            line-height: 1.2;
-            transition: color 0.15s;
+            text-transform: none;
+            letter-spacing: 0;
+            margin: 0;
+            cursor: pointer;
         }
 
-        .col-picker-item.active .cp-label {
-            color: white;
+        .col-checkbox-item.selected label {
+            color: var(--primary);
+            font-weight: 600;
         }
+
+        .col-select-all-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .col-select-all-row label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: none;
+        }
+
+        .col-btn-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .col-btn-stack button {
+            min-height: 44px;
+            font-size: 0.85rem;
+        }
+
+        .btn-print-sel {
+            background: var(--btn-print);
+            box-shadow: 0 2px 8px rgba(109,40,217,0.25);
+        }
+
+        .btn-export-sel {
+            background: var(--btn-export);
+            box-shadow: 0 2px 8px rgba(6,95,70,0.25);
+        }
+
+        .btn-cancel-col {
+            background: var(--text-secondary);
+        }
+
+        /* Year highlight card */
+        .year-filter-card {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            max-width: 960px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .year-filter-card label {
+            color: #C7D7FF;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .year-filter-card select {
+            flex: 1;
+            min-height: 40px;
+            padding: 8px 32px 8px 12px;
+            border-radius: var(--radius-sm);
+            border: 2px solid rgba(255,255,255,0.25);
+            background-color: rgba(255,255,255,0.12);
+            color: white;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .year-filter-card select option {
+            color: var(--text-primary);
+            background: white;
+        }
+
+        .year-filter-card .year-count {
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.18);
+            padding: 6px 12px;
+            border-radius: 99px;
+        }
+
+        /* Print summary table styles */
+        @media print {
+            #printSummaryArea {
+                display: block !important;
+                width: 100%;
+                padding: 10mm;
+                font-family: 'Segoe UI', sans-serif;
+            }
+
+            #printSummaryArea h2 {
+                font-size: 14pt;
+                margin: 0 0 4px 0;
+                text-align: center;
+            }
+
+            #printSummaryArea .print-subtitle {
+                text-align: center;
+                font-size: 10pt;
+                color: #555;
+                margin-bottom: 12px;
+            }
+
+            #printSummaryArea table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 8pt;
+            }
+
+            #printSummaryArea th {
+                background: #1E3A8A;
+                color: white;
+                padding: 6px 5px;
+                border: 1px solid #333;
+                font-weight: 700;
+                font-size: 7pt;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            #printSummaryArea td {
+                padding: 5px;
+                border: 1px solid #ccc;
+                font-size: 8pt;
+                white-space: nowrap;
+            }
+
+            #printSummaryArea tr:nth-child(even) { background: #f3f6ff; }
+
+            #printSummaryArea .print-footer {
+                margin-top: 12px;
+                text-align: right;
+                font-size: 8pt;
+                color: #888;
+            }
+        }
+
+        #printSummaryArea { display: none; }
 
 
         /* ═══════════════════════════════════════════════
@@ -952,7 +990,7 @@
             @page { size:A4 portrait; margin:0; }
 
             /* Remove all siblings from flow — prevents blank pages */
-            body > *:not(#printArea) { display:none !important; }
+            body > *:not(#printArea):not(#printSummaryArea) { display:none !important; }
 
             #printArea {
                 display:block !important;
@@ -1054,12 +1092,6 @@
 </head>
 <body>
 
-<!-- Loading overlay: shown immediately, hidden after app is ready -->
-<div id="app-loader">
-    <div class="loader-spinner"></div>
-    <div class="loader-text">Loading EduData…</div>
-</div>
-
 <div id="main-content">
     <header>
         <h2>🎓 EduData</h2>
@@ -1088,19 +1120,6 @@
         <div class="stat"><h3 id="girls">0</h3><p>Girls</p></div>
     </div>
 
-    <!-- ACTION BAR: Search / Edit / Delete -->
-    <div class="action-bar">
-        <button class="action-btn action-btn-search" onclick="openSearchMode('search')">
-            <i class="fa-solid fa-magnifying-glass"></i> Search
-        </button>
-        <button class="action-btn action-btn-edit" onclick="openSearchMode('edit')">
-            <i class="fa-solid fa-pen"></i> Edit
-        </button>
-        <button class="action-btn action-btn-delete" onclick="openSearchMode('delete')">
-            <i class="fa-solid fa-trash"></i> Delete
-        </button>
-    </div>
-
     <div class="card">
         <div class="photo-container">
             <div id="photo-preview"><span>3.5 x 4.5 cm Photo<br>Required</span></div>
@@ -1117,7 +1136,7 @@
 
             <div class="section-title">Academic Details</div>
             <div class="field-group">
-                <label>CLASS</label>
+                <label>CLASS <span class="req">*</span></label>
                 <select id="CLASS" required>
                     <option value="">Select</option>
                     <option>IX</option><option>X</option><option>XI</option><option>XII</option>
@@ -1135,34 +1154,34 @@
                 </select>
             </div>
             <div class="field-group">
-                <label>DIVISION</label>
+                <label>DIVISION <span class="req">*</span></label>
                 <select id="DIVISION" required>
                     <option value="">Select</option>
                     <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option><option>J</option><option>K</option><option>L</option><option>M</option><option>N</option><option>O</option><option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
                 </select>
             </div>
-            <div class="field-group"><label>ROLL NO.</label><input type="number" id="ROLL_NO" required></div>
-            <div class="field-group"><label>GR NO.</label><input type="number" id="GR_NO" required></div>
-            <div class="field-group"><label>STUDENT NAME (L.C.)</label><input type="text" id="STUDENT_NAME" class="up" required></div>
-            <div class="field-group"><label>DATE OF ADMISSION</label><input type="date" id="DOA" required></div>
+            <div class="field-group"><label>ROLL NO. <span class="req">*</span></label><input type="number" id="ROLL_NO" required></div>
+            <div class="field-group"><label>GR NO. <span class="req">*</span></label><input type="number" id="GR_NO" required></div>
+            <div class="field-group"><label>STUDENT NAME (L.C.) <span class="req">*</span></label><input type="text" id="STUDENT_NAME" class="up" required></div>
+            <div class="field-group"><label>DATE OF ADMISSION <span class="req">*</span></label><input type="date" id="DOA" required></div>
             <div class="field-group"><label>PREV. SCHOOL NAME</label><input type="text" id="PREV_SCHOOL" class="up"></div>
 
             <div class="section-title">Personal Details</div>
-            <div class="field-group"><label>GENDER</label><select id="GENDER" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
-            <div class="field-group"><label>DATE OF BIRTH (L.C.)</label><input type="date" id="DOB_LC" required></div>
+            <div class="field-group"><label>GENDER <span class="req">*</span></label><select id="GENDER" required><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+            <div class="field-group"><label>DATE OF BIRTH (L.C.) <span class="req">*</span></label><input type="date" id="DOB_LC" required></div>
             <div class="field-group"><label>PLACE OF BIRTH</label><input type="text" id="POB" class="up"></div>
             <div class="field-group"><label>CASTE</label><input type="text" id="CASTE" class="up"></div>
-            <div class="field-group"><label>AADHAR NO.</label><input type="text" id="AADHAR_NO" pattern="[0-9]{12}" maxlength="12" inputmode="numeric" required></div>
+            <div class="field-group"><label>AADHAR NO. <span class="req">*</span></label><input type="text" id="AADHAR_NO" pattern="[0-9]{12}" maxlength="12" inputmode="numeric" required></div>
             <div class="field-group"><label>NAME ON AADHAR</label><input type="text" id="NAME_AADHAR" class="up"></div>
             <div class="field-group"><label>DOB ON AADHAR</label><input type="date" id="DOB_AADHAR"></div>
 
             <div class="section-title">Contact Details</div>
             <div class="field-group"><label>FATHER NAME</label><input type="text" id="FATHER_NAME" class="up"></div>
             <div class="field-group"><label>MOTHER NAME</label><input type="text" id="MOTHER_NAME" class="up"></div>
-            <div class="field-group"><label>MOBILE 1</label><input type="tel" id="MOBILE_1" pattern="[0-9]{10}" maxlength="10" inputmode="numeric" required></div>
+            <div class="field-group"><label>MOBILE 1 <span class="req">*</span></label><input type="tel" id="MOBILE_1" pattern="[0-9]{10}" maxlength="10" inputmode="numeric" required></div>
             <div class="field-group"><label>MOBILE 2</label><input type="tel" id="MOBILE_2" pattern="[0-9]{10}" maxlength="10" inputmode="numeric"></div>
             <div class="field-group"><label>EMAIL ID</label><input type="email" id="EMAIL_ID"></div>
-            <div class="field-group"><label>ADDRESS</label><textarea id="ADDRESS" rows="2" class="up" required></textarea></div>
+            <div class="field-group"><label>ADDRESS <span class="req">*</span></label><textarea id="ADDRESS" rows="2" class="up" required></textarea></div>
 
             <div class="section-title">Govt &amp; Bank IDs</div>
             <div class="field-group"><label>BANK ACC NO.</label><input type="text" id="BANK_ACC"></div>
@@ -1187,7 +1206,7 @@
 
             <div class="section-title">Vocational Info</div>
             <div class="field-group">
-                <label>VOCATIONAL SUBJECT AT Xth?</label>
+                <label>VOCATIONAL SUBJECT AT Xth? <span class="req">*</span></label>
                 <select id="VOC_STATUS" onchange="toggleVoc(this.value)" required>
                     <option value="No">No</option><option value="Yes">Yes</option>
                 </select>
@@ -1214,6 +1233,21 @@
 
     <!-- ═══════ TAB 2: SUMMARY ═══════ -->
     <div class="tab-panel" id="tab-summary">
+
+        <!-- Academic Year Filter Card -->
+        <div class="year-filter-card">
+            <label><i class="fa-solid fa-calendar-days"></i> Academic Year</label>
+            <select id="summaryYearFilter" onchange="onYearFilterChange()">
+                <option value="">All Years</option>
+                <option>2023-2024</option><option>2024-2025</option><option>2025-2026</option>
+                <option>2026-2027</option><option>2027-2028</option><option>2028-2029</option>
+                <option>2029-2030</option><option>2030-2031</option><option>2031-2032</option>
+                <option>2032-2033</option><option>2033-2034</option><option>2034-2035</option>
+                <option>2035-2036</option><option>2036-2037</option><option>2037-2038</option>
+                <option>2038-2039</option><option>2039-2040</option>
+            </select>
+            <span class="year-count" id="yearCountBadge">All</span>
+        </div>
 
         <!-- Quick stats row -->
         <div class="summary-stats">
@@ -1273,45 +1307,43 @@
                     <option value="APL">APL</option>
                     <option value="BPL">BPL</option>
                 </select>
-                <select id="tbl-pen" onchange="renderClassTable()" class="filter-select">
-                    <option value="">PEN: All</option>
-                    <option value="filled">PEN: Filled</option>
-                    <option value="empty">PEN: Empty</option>
-                </select>
-                <select id="tbl-apaar" onchange="renderClassTable()" class="filter-select">
-                    <option value="">APAAR: All</option>
-                    <option value="filled">APAAR: Filled</option>
-                    <option value="empty">APAAR: Empty</option>
-                </select>
                 <button onclick="clearTableFilters()" class="filter-clear-btn"><i class="fa-solid fa-xmark"></i> Clear</button>
+                <button onclick="openColumnSelector()" class="filter-clear-btn" style="background:var(--btn-print);"><i class="fa-solid fa-print"></i> Print / Export</button>
             </div>
 
-            <!-- Column Picker + Scrollable Table -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-                <span id="tableCount" style="font-size:0.72rem;color:var(--text-muted);font-weight:500;"></span>
-                <div class="col-picker-wrap">
-                    <button class="col-picker-btn" onclick="toggleColPicker(event)">
-                        <i class="fa-solid fa-table-columns"></i> Choose Columns
-                    </button>
-                    <div class="col-picker-panel" id="colPickerPanel">
-                        <div class="col-picker-header">
-                            <span>Select Columns &nbsp;<span id="cpCount" style="background:var(--primary);color:white;border-radius:99px;padding:1px 7px;font-size:0.68rem;font-weight:700;"></span></span>
-                            <div class="col-picker-actions">
-                                <button class="col-picker-sel-all" onclick="setAllCols(true)">All</button>
-                                <button class="col-picker-clear"   onclick="setAllCols(false)">None</button>
-                            </div>
-                        </div>
-                        <div class="col-picker-grid" id="colPickerGrid"></div>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Scrollable Table — all fields -->
             <div class="summary-table-wrap">
-                <table id="summaryTable" style="width:100%;border-collapse:collapse;font-size:0.8rem;">
-                    <thead><tr id="summaryTableHead"></tr></thead>
+                <table id="summaryTable" style="min-width:1400px;width:100%;border-collapse:collapse;font-size:0.8rem;">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Class</th>
+                            <th>Div</th>
+                            <th>Roll</th>
+                            <th>GR No</th>
+                            <th>Student Name</th>
+                            <th>Gender</th>
+                            <th>DOB</th>
+                            <th>Caste</th>
+                            <th>Father</th>
+                            <th>Mother</th>
+                            <th>Mobile 1</th>
+                            <th>Mobile 2</th>
+                            <th>Aadhar</th>
+                            <th>Blood Grp</th>
+                            <th>Orphan</th>
+                            <th>Hostel</th>
+                            <th>APL/BPL</th>
+                            <th>Vocational</th>
+                            <th>Voc Subject</th>
+                            <th>Acad. Year</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
                     <tbody id="classTableBody"></tbody>
                 </table>
             </div>
+            <p id="tableCount"></p>
         </div>
 
     </div><!-- end #tab-summary -->
@@ -1396,6 +1428,29 @@
 <!-- printArea: hidden normally, shown only during print -->
 <div id="printArea"></div>
 
+<!-- Print Summary Area: hidden normally, shown only during summary print -->
+<div id="printSummaryArea"></div>
+
+<!-- Column Selector Modal -->
+<div id="columnModal">
+    <div class="col-modal-content">
+        <h3><i class="fa-solid fa-print"></i> Print / Export — Choose Columns</h3>
+        <div class="col-select-all-row">
+            <label>Select Columns</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" id="colModalSelectAll" checked onchange="toggleSelectAllColumns()" style="width:16px;height:16px;min-height:auto;accent-color:var(--primary);">
+                Select All
+            </label>
+        </div>
+        <div class="col-checkbox-grid" id="colCheckboxGrid"></div>
+        <div class="col-btn-stack">
+            <button class="btn-print-sel" onclick="printSelectedColumns()"><i class="fa-solid fa-print"></i> Print Selected Columns</button>
+            <button class="btn-export-sel" onclick="exportSelectedColumns()"><i class="fa-solid fa-file-arrow-up"></i> Export Selected Columns</button>
+            <button class="btn-cancel-col" onclick="closeColumnSelector()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- Hidden file input for Import Excel -->
 <input type="file" id="importFileInput" hidden accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)">
 
@@ -1403,7 +1458,6 @@
 <div id="searchModal">
     <div class="modal-content">
         <h3>Search Records</h3>
-        <div id="modalModeBanner"></div>
         <select id="classFilter" onchange="performSearch()" style="width:100%;margin-bottom:8px;">
             <option value="">All Classes</option>
             <option>IX</option><option>X</option><option>XI</option><option>XII</option>
@@ -1428,49 +1482,16 @@
         "REMARK","VOC_STATUS","VOC_NAME"
     ];
 
-    let db = [];
-
-    /* ── Dynamic SheetJS loader: only fetched when import/export is needed ── */
-    function loadXLSX() {
-        return new Promise((resolve, reject) => {
-            if (window.XLSX) { resolve(window.XLSX); return; }
-            const s = document.createElement('script');
-            s.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
-            s.onload  = () => resolve(window.XLSX);
-            s.onerror = () => reject(new Error('Failed to load SheetJS'));
-            document.head.appendChild(s);
-        });
-    }
-
-    /* ── Hide loading overlay, then init app data ── */
-    window.addEventListener('load', () => {
-        // Parse localStorage AFTER the page has painted
-        requestAnimationFrame(() => {
-            try {
-                db = JSON.parse(localStorage.getItem('eduDB_v4_final')) || [];
-            } catch(e) {
-                db = [];
-            }
-            fixExistingData();
-            updateDashboard();
-
-            // Hide loader with a short fade
-            const loader = document.getElementById('app-loader');
-            if (loader) {
-                loader.classList.add('hidden');
-                setTimeout(() => loader.remove(), 400);
-            }
-        });
-
-        // Service Worker registration (PWA)
-        if ('serviceWorker' in navigator && !location.hostname.includes('claudeusercontent.com')) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW registered:', reg.scope))
-                .catch(err => console.warn('SW registration failed:', err));
-        }
-    });
+    let db = JSON.parse(localStorage.getItem('eduDB_v4_final')) || [];
+    window.addEventListener('load', () => { fixExistingData(); updateDashboard(); });
 
     /* ── Helpers ── */
+    function formatDate(val) {
+        if (!val) return '-';
+        const parts = String(val).split('-');
+        if (parts.length !== 3) return val;
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
     function toggleVoc(val) {
         document.getElementById('vocBox').style.display = (val === 'Yes') ? 'block' : 'none';
     }
@@ -1516,30 +1537,8 @@
         document.getElementById('saveBtn').style.display   = 'flex';
         document.getElementById('updateBtn').style.display = 'none';
     }
-    let searchMode = 'search'; // 'search' | 'edit' | 'delete'
-
-    function openSearchMode(mode) {
-        searchMode = mode || 'search';
-        const banner = document.getElementById('modalModeBanner');
-        const modeConfig = {
-            search: { text: '🔍 Showing all results — click Edit or Delete per record', bg: '#EEF2FF', color: '#3730A3' },
-            edit:   { text: '✏️ Select a student below to edit their record',           bg: '#ECFDF5', color: '#065F46' },
-            delete: { text: '🗑️ Select a student below to delete their record',         bg: '#FEF2F2', color: '#991B1B' },
-        };
-        const cfg = modeConfig[searchMode];
-        banner.style.display = 'block';
-        banner.style.background = cfg.bg;
-        banner.style.color = cfg.color;
-        banner.textContent = cfg.text;
-        document.getElementById('searchModal').style.display = 'flex';
-        performSearch();
-    }
-    function openSearch()  { openSearchMode('search'); }
-    function closeSearch() {
-        document.getElementById('searchModal').style.display = 'none';
-        searchMode = 'search';
-        document.getElementById('modalModeBanner').style.display = 'none';
-    }
+    function openSearch()  { document.getElementById('searchModal').style.display = 'flex'; performSearch(); }
+    function closeSearch() { document.getElementById('searchModal').style.display = 'none'; }
     function performSearch() {
         const q  = document.getElementById('searchInput').value.toLowerCase();
         const cf = document.getElementById('classFilter').value;
@@ -1548,35 +1547,24 @@
             ((r.STUDENT_NAME||'').toLowerCase().includes(q) ||
              (r.ROLL_NO||'').toString().includes(q))
         );
-
-        // Highlight the relevant action button based on searchMode
-        const editStyle   = searchMode === 'edit'   ? 'background:#16A34A;color:white;font-weight:800;box-shadow:0 0 0 2px #16A34A;' : 'background:var(--warning);color:white;';
-        const deleteStyle = searchMode === 'delete' ? 'background:#DC2626;color:white;font-weight:800;box-shadow:0 0 0 2px #DC2626;' : 'background:var(--error);color:white;';
-
         document.getElementById('searchResults').innerHTML = filtered.map(r => `
             <div class="search-item">
                 <strong>${r.STUDENT_NAME||'-'}</strong> &nbsp;(Roll: ${r.ROLL_NO||'-'})<br>
-                Class: ${r.CLASS||'-'} &nbsp;|&nbsp; Div: ${r.DIVISION||'-'} &nbsp;|&nbsp; Year: ${r.ACADEMIC_YEAR||'-'}
-                <div style="display:flex;gap:5px;margin-top:8px;">
-                    <button style="flex:1;border:none;padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;${editStyle}" onclick="startEdit(${r.id})"><i class='fa-solid fa-pen'></i> Edit</button>
-                    <button style="flex:1;background:var(--primary);color:white;border:none;padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;" onclick="printRecord(${r.id})"><i class='fa-solid fa-print'></i> Print</button>
-                    <button style="flex:1;border:none;padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;${deleteStyle}" onclick="handleDelete(${r.id})"><i class='fa-solid fa-trash'></i> Del</button>
+                Class: ${r.CLASS||'-'} &nbsp;|&nbsp; Year: ${r.ACADEMIC_YEAR||'-'}
+                <div style="display:flex;gap:5px;margin-top:5px;">
+                    <button style="flex:1;background:var(--warning);color:white;border:none;padding:8px;border-radius:5px;" onclick="startEdit(${r.id})">Edit</button>
+                    <button style="flex:1;background:var(--primary);color:white;border:none;padding:8px;border-radius:5px;" onclick="printRecord(${r.id})">Print</button>
+                    <button style="flex:1;background:var(--error);color:white;border:none;padding:8px;border-radius:5px;" onclick="handleDelete(${r.id})">Del</button>
                 </div>
             </div>
         `).join('') || '<p style="color:#888;text-align:center;padding:20px;">No records found.</p>';
     }
     function startEdit(id) {
         const s = db.find(x => x.id === id);
-        if (!s) { showToast('Record not found — possible duplicate ID. Please reimport data.', '#EF4444'); return; }
         FIELDS.forEach(f => { if (document.getElementById(f)) document.getElementById(f).value = s[f]||''; });
-        // FIX: Always update photo area — clear it first so a previous student's
-        // photo never lingers when the current student has no photo.
         if (s.photo) {
             document.getElementById('photo-preview').innerHTML = `<img src="${s.photo}">`;
             document.getElementById('photoBase64').value = s.photo;
-        } else {
-            document.getElementById('photo-preview').innerHTML = '<span>3.5 x 4.5 cm Photo<br>Required</span>';
-            document.getElementById('photoBase64').value = '';
         }
         document.getElementById('editID').value = id;
         document.getElementById('saveBtn').style.display   = 'none';
@@ -1584,7 +1572,7 @@
         toggleVoc(s.VOC_STATUS); closeSearch(); window.scrollTo(0,0);
     }
     function handleUpdate() {
-        const id    = Number(document.getElementById('editID').value);
+        const id    = parseInt(document.getElementById('editID').value);
         const index = db.findIndex(s => s.id === id);
         if (index === -1) { showToast('Record not found','#EF4444'); return; }
         FIELDS.forEach(f => { if (document.getElementById(f)) db[index][f] = document.getElementById(f).value; });
@@ -1596,7 +1584,6 @@
         if (!confirm('Delete this student record?')) return;
         db = db.filter(s => s.id !== id);
         localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
-        showToast('🗑️ Record deleted', '#DC2626');
         performSearch(); updateDashboard();
     }
     function wipeDatabase() {
@@ -1631,23 +1618,20 @@
         const academicYear = s.ACADEMIC_YEAR || '-';
         const numRows      = Math.ceil(FIELDS.length / 3);
         const breakClass   = addBreak ? ' print-page-break' : '';
+        const dateFields   = ['DOA','DOB_LC','DOB_AADHAR'];
 
         const photoHtml = s.photo
             ? `<img src="${s.photo}" class="print-photo">`
             : `<div class="print-photo-placeholder">AFFIX<br>PHOTO</div>`;
 
-        const DATE_PRINT_FIELDS = ['DOA','DOB_LC','DOB_AADHAR'];
-        function fmtPrintDate(v) {
-            if (!v) return '-';
-            const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
-        }
-
-        const cells = FIELDS.map(f => `
+        const cells = FIELDS.map(f => {
+            const val = dateFields.includes(f) ? formatDate(s[f]) : (s[f] || '-');
+            return `
             <div class="print-cell">
                 <span class="print-label">${f.replace(/_/g,' ')}</span>
-                <span class="print-value">${DATE_PRINT_FIELDS.includes(f) ? fmtPrintDate(s[f]) : (s[f] || '-')}</span>
-            </div>`).join('');
+                <span class="print-value">${val}</span>
+            </div>`;
+        }).join('');
 
         return `
         <div class="print-page${breakClass}">
@@ -1705,15 +1689,10 @@
         document.getElementById('importFileInput').click();
     }
 
-    async function handleImportFile(event) {
+    function handleImportFile(event) {
         const file = event.target.files[0];
         if (!file) return;
         event.target.value = '';
-
-        showToast('⏳ Loading import module…', '#1E3A8A');
-        let XLSX;
-        try { XLSX = await loadXLSX(); }
-        catch(e) { showToast('❌ Import failed: could not load library','#EF4444'); return; }
 
         /* ── Dropdown value normaliser ──────────────────────────────
            Excel may contain "MALE", "male", "M", "1", "yes", "YES",
@@ -1783,20 +1762,9 @@
 
                 let imported = 0, skipped = 0;
 
-                // FIX: Generate a unique base ID ONCE before the loop.
-                // CRITICAL: Date.now() * 10000 overflows Number.MAX_SAFE_INTEGER
-                // (9_007_199_254_740_991), causing floating-point rounding that
-                // makes multiple rows share the same ID — which is why clicking
-                // Edit loaded the wrong student. We now use Date.now() alone
-                // (safe, ~13 digits) and ensure we start above any existing ID.
-                const maxExistingId = db.length
-                    ? Math.max(...db.map(s => Number(s.id) || 0))
-                    : 0;
-                const importIdBase = Math.max(Date.now(), maxExistingId + 1);
-
                 rows.forEach((row, i) => {
                     const record = {
-                        id   : importIdBase + i,   // guaranteed unique: safe base + unique index
+                        id   : Date.now() + i * 7 + Math.floor(Math.random()*999),
                         photo: ''
                     };
                     let hasData = false;
@@ -1806,31 +1774,11 @@
                         if (!mapped) return;
                         let val = row[col];
 
-                        /* Normalise all date values → YYYY-MM-DD (required by HTML date inputs) */
-                        const DATE_IMPORT_FIELDS = ['DOA','DOB_LC','DOB_AADHAR'];
-                        if (DATE_IMPORT_FIELDS.includes(mapped)) {
-                            if (val instanceof Date && !isNaN(val)) {
-                                // SheetJS Date object
-                                val = val.getFullYear() + '-' +
-                                      String(val.getMonth()+1).padStart(2,'0') + '-' +
-                                      String(val.getDate()).padStart(2,'0');
-                            } else {
-                                const s = String(val).trim();
-                                // DD/MM/YYYY or DD-MM-YYYY → YYYY-MM-DD
-                                const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-                                // YYYY/MM/DD → YYYY-MM-DD
-                                const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-                                if (dmy) {
-                                    val = `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
-                                } else if (ymd) {
-                                    val = `${ymd[1]}-${ymd[2].padStart(2,'0')}-${ymd[3].padStart(2,'0')}`;
-                                } else {
-                                    val = s;
-                                }
-                            }
-                        } else if (val instanceof Date && !isNaN(val)) {
-                            // Non-date field that SheetJS parsed as Date — convert to string
-                            val = val.toLocaleDateString('en-GB'); // DD/MM/YYYY fallback
+                        /* Date objects → YYYY-MM-DD */
+                        if (val instanceof Date && !isNaN(val)) {
+                            val = val.getFullYear() + '-' +
+                                  String(val.getMonth()+1).padStart(2,'0') + '-' +
+                                  String(val.getDate()).padStart(2,'0');
                         } else {
                             val = String(val).trim();
                         }
@@ -1907,33 +1855,12 @@
             return raw||'';
         }
 
-        // Normalise date fields to YYYY-MM-DD (handles DD/MM/YYYY, YYYY/MM/DD, DD-MM-YYYY stored by older versions)
-        const DATE_FIX_FIELDS = ['DOA','DOB_LC','DOB_AADHAR'];
-        function normDate(v) {
-            if (!v) return v;
-            const s = String(v).trim();
-            // Already YYYY-MM-DD → keep
-            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-            // DD/MM/YYYY or DD-MM-YYYY → YYYY-MM-DD
-            const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-            if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
-            // YYYY/MM/DD → YYYY-MM-DD
-            const ymd = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
-            if (ymd) return `${ymd[1]}-${ymd[2].padStart(2,'0')}-${ymd[3].padStart(2,'0')}`;
-            return v; // unrecognised — leave unchanged
-        }
-
         let changed = 0;
         db = db.map(s => {
             const fixed = Object.assign({}, s);
             ['GENDER','HOSTEL_STUDENT','ORPHAN','VOC_STATUS','CLASS','APL_BPL','BLOOD_GROUP'].forEach(f => {
                 const orig = fixed[f];
                 fixed[f] = nd(f, fixed[f]);
-                if (fixed[f] !== orig) changed++;
-            });
-            DATE_FIX_FIELDS.forEach(f => {
-                const orig = fixed[f];
-                fixed[f] = normDate(fixed[f]);
                 if (fixed[f] !== orig) changed++;
             });
             // Default empty yes/no fields to 'No'
@@ -1944,27 +1871,9 @@
             return fixed;
         });
 
-        // ── Repair duplicate IDs (caused by the old Date.now()*10000 overflow bug) ──
-        // Any two records sharing the same id cause startEdit() to always load
-        // the first match — making it look like the wrong student was selected.
-        const seenIds = new Set();
-        let repairBase = Date.now();
-        db = db.map(s => {
-            const sid = Number(s.id) || 0;
-            if (!sid || seenIds.has(sid)) {
-                while (seenIds.has(repairBase)) repairBase++;
-                const newId = repairBase++;
-                seenIds.add(newId);
-                changed++;
-                return Object.assign({}, s, { id: newId });
-            }
-            seenIds.add(sid);
-            return s;
-        });
-
         if (changed > 0) {
             localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
-            console.log(`Fixed ${changed} issues (dropdown values + duplicate IDs) in existing data.`);
+            console.log(`Fixed ${changed} dropdown values in existing data.`);
         }
     }
 
@@ -1985,149 +1894,19 @@
        SUMMARY TAB — quick stats
     ══════════════════════════════════════════════════════ */
     function updateSummaryStats() {
-        document.getElementById('s-total').textContent  = db.length;
-        document.getElementById('s-boys').textContent   = db.filter(s => s.GENDER==='Male').length;
-        document.getElementById('s-girls').textContent  = db.filter(s => s.GENDER==='Female').length;
-        document.getElementById('s-ix').textContent     = db.filter(s => s.CLASS==='IX').length;
-        document.getElementById('s-x').textContent      = db.filter(s => s.CLASS==='X').length;
-        document.getElementById('s-xi').textContent     = db.filter(s => s.CLASS==='XI').length;
-        document.getElementById('s-xii').textContent    = db.filter(s => s.CLASS==='XII').length;
+        const filtered = getFilteredRows();
+        document.getElementById('s-total').textContent  = filtered.length;
+        document.getElementById('s-boys').textContent   = filtered.filter(s => s.GENDER==='Male').length;
+        document.getElementById('s-girls').textContent  = filtered.filter(s => s.GENDER==='Female').length;
+        document.getElementById('s-ix').textContent     = filtered.filter(s => s.CLASS==='IX').length;
+        document.getElementById('s-x').textContent      = filtered.filter(s => s.CLASS==='X').length;
+        document.getElementById('s-xi').textContent     = filtered.filter(s => s.CLASS==='XI').length;
+        document.getElementById('s-xii').textContent    = filtered.filter(s => s.CLASS==='XII').length;
+        updateYearBadge();
     }
-
-    function clearTableFilters() {
-        ['tbl-class','tbl-div','tbl-year','tbl-gender','tbl-voc','tbl-orphan','tbl-hostel','tbl-aplbpl','tbl-pen','tbl-apaar']
-            .forEach(id => document.getElementById(id).value = '');
-        renderClassTable();
-    }
-
-    /* ─── All column definitions (order = display order) ─── */
-    const TABLE_COLS = [
-        { key: '#',              label: '#',              center: true,  special: 'serial'  },
-        { key: 'CLASS',          label: 'Class',          center: true                      },
-        { key: 'DIVISION',       label: 'Div',            center: true                      },
-        { key: 'ROLL_NO',        label: 'Roll',           center: true                      },
-        { key: 'GR_NO',          label: 'GR No',          center: true                      },
-        { key: 'STUDENT_NAME',   label: 'Student Name',                  special: 'name'   },
-        { key: 'GENDER',         label: 'Gender',         center: true                      },
-        { key: 'DOB_LC',         label: 'DOB (LC)',       center: true,  date: true         },
-        { key: 'DOA',            label: 'DOA',            center: true,  date: true         },
-        { key: 'POB',            label: 'Place of Birth', center: true                      },
-        { key: 'CASTE',          label: 'Caste',          center: true                      },
-        { key: 'FATHER_NAME',    label: 'Father Name'                                       },
-        { key: 'MOTHER_NAME',    label: 'Mother Name'                                       },
-        { key: 'MOBILE_1',       label: 'Mobile 1',       center: true                      },
-        { key: 'MOBILE_2',       label: 'Mobile 2',       center: true                      },
-        { key: 'EMAIL_ID',       label: 'Email'                                              },
-        { key: 'AADHAR_NO',      label: 'Aadhar No',      center: true                      },
-        { key: 'NAME_AADHAR',    label: 'Name (Aadhar)'                                     },
-        { key: 'DOB_AADHAR',     label: 'DOB (Aadhar)',   center: true,  date: true         },
-        { key: 'PREV_SCHOOL',    label: 'Prev. School'                                      },
-        { key: 'BANK_ACC',       label: 'Bank A/C',       center: true                      },
-        { key: 'BANK_NAME',      label: 'Bank Name'                                         },
-        { key: 'IFSC',           label: 'IFSC',           center: true                      },
-        { key: 'PEN',            label: 'PEN',            center: true                      },
-        { key: 'APAAR',          label: 'APAAR ID',       center: true,  special: 'apaar'  },
-        { key: 'BLOOD_GROUP',    label: 'Blood Grp',      center: true                      },
-        { key: 'ORPHAN',         label: 'Orphan',         center: true,  special: 'orphan' },
-        { key: 'HOSTEL_STUDENT', label: 'Hostel',         center: true,  special: 'hostel' },
-        { key: 'APL_BPL',        label: 'APL/BPL',        center: true                      },
-        { key: 'HEIGHT',         label: 'Height',         center: true                      },
-        { key: 'WEIGHT',         label: 'Weight',         center: true                      },
-        { key: 'PERCENTAGE',     label: '%',              center: true                      },
-        { key: 'DISTANCE',       label: 'Distance',       center: true                      },
-        { key: 'VOC_STATUS',     label: 'Vocational',     center: true,  special: 'voc'    },
-        { key: 'VOC_NAME',       label: 'Voc Subject'                                       },
-        { key: 'ACADEMIC_YEAR',  label: 'Acad. Year',     center: true                      },
-        { key: 'ADDRESS',        label: 'Address',                       special: 'address' },
-        { key: 'REMARK',         label: 'Remark'                                            },
-    ];
-
-    /* Keys that are visible by default — all of them */
-    let visibleCols = new Set(TABLE_COLS.map(c => c.key));
-
-    /* Build the column-picker checkboxes (called once on first Summary tab visit) */
-    let colPickerBuilt = false;
-    function buildColPicker() {
-        if (colPickerBuilt) return;
-        colPickerBuilt = true;
-        const grid = document.getElementById('colPickerGrid');
-        grid.innerHTML = TABLE_COLS.map(c => {
-            const isActive = visibleCols.has(c.key);
-            return `<div class="col-picker-item${isActive ? ' active' : ''}" id="cpi_${c.key}"
-                        onclick="onColToggle('${c.key}')">
-                        <span class="cp-icon"><i class="fa-solid fa-check" style="font-size:0.6rem;"></i></span>
-                        <span class="cp-label">${c.label}</span>
-                    </div>`;
-        }).join('');
-    }
-
-    function onColToggle(key) {
-        const isNowActive = visibleCols.has(key);
-        visibleCols[isNowActive ? 'delete' : 'add'](key);
-        const chip = document.getElementById('cpi_' + key);
-        if (chip) chip.classList.toggle('active', !isNowActive);
-        renderClassTable();
-    }
-
-    function setAllCols(show) {
-        TABLE_COLS.forEach(c => {
-            visibleCols[show ? 'add' : 'delete'](c.key);
-            const chip = document.getElementById('cpi_' + c.key);
-            if (chip) chip.classList.toggle('active', show);
-        });
-        renderClassTable();
-    }
-
-    function toggleColPicker(e) {
-        e.stopPropagation();
-        buildColPicker();
-        const panel = document.getElementById('colPickerPanel');
-        const isOpen = panel.classList.contains('open');
-        if (isOpen) { panel.classList.remove('open'); return; }
-
-        const btn    = e.currentTarget;
-        const rect   = btn.getBoundingClientRect();
-        const margin = 10;
-        const panelW = 340;
-
-        /* Horizontal: align right edge of panel to right edge of button, never off-screen */
-        let left = rect.right - panelW;
-        if (left < margin) left = margin;
-        panel.style.left = left + 'px';
-
-        /* Vertical: measure space above & below, open toward the larger side */
-        const spaceBelow = window.innerHeight - rect.bottom - margin;
-        const spaceAbove = rect.top - margin;
-
-        if (spaceBelow >= spaceAbove) {
-            /* Open downward — cap height to whatever fits */
-            panel.style.top    = (rect.bottom + 6) + 'px';
-            panel.style.bottom = 'auto';
-            panel.style.maxHeight = Math.max(180, spaceBelow) + 'px';
-        } else {
-            /* Open upward — cap height to whatever fits above */
-            panel.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
-            panel.style.top    = 'auto';
-            panel.style.maxHeight = Math.max(180, spaceAbove) + 'px';
-        }
-
-        panel.classList.add('open');
-    }
-
-    /* Stop clicks INSIDE the panel from bubbling up to the document close-listener */
-    document.getElementById('colPickerPanel').addEventListener('click', e => e.stopPropagation());
-
-    /* Close picker when clicking outside */
-    document.addEventListener('click', () => {
-        document.getElementById('colPickerPanel')?.classList.remove('open');
-    });
 
     function renderClassTable() {
         if (typeof db === 'undefined') return;
-
-        /* Ensure col picker is built if Summary tab is active */
-        buildColPicker();
-
         const fCls    = document.getElementById('tbl-class').value;
         const fDiv    = document.getElementById('tbl-div').value;
         const fYear   = document.getElementById('tbl-year').value;
@@ -2136,8 +1915,6 @@
         const fOrphan = document.getElementById('tbl-orphan').value;
         const fHostel = document.getElementById('tbl-hostel').value;
         const fApl    = document.getElementById('tbl-aplbpl').value;
-        const fPen    = document.getElementById('tbl-pen').value;
-        const fApaar  = document.getElementById('tbl-apaar').value;
 
         const rows = db.filter(s => {
             const hostelYes = s.HOSTEL_STUDENT==='Yes';
@@ -2149,82 +1926,61 @@
             if (fOrphan && s.ORPHAN        !== fOrphan) return false;
             if (fHostel && (fHostel==='Yes') !== hostelYes) return false;
             if (fApl    && s.APL_BPL       !== fApl)    return false;
-            if (fPen === 'filled' && !s.PEN)   return false;
-            if (fPen === 'empty'  && s.PEN)    return false;
-            if (fApaar === 'filled' && !s.APAAR) return false;
-            if (fApaar === 'empty'  && s.APAAR)  return false;
             return true;
         });
 
-        /* Active columns in display order */
-        const activeCols = TABLE_COLS.filter(c => visibleCols.has(c.key));
+        const td = (val, center) =>
+            `<td style="padding:7px 8px;border:1px solid #e2e8f0;white-space:nowrap;${center?'text-align:center;':''}">${val||'-'}</td>`;
 
-        /* Convert YYYY-MM-DD → DD/MM/YYYY for display */
-        const fmtDate = v => {
-            if (!v) return '-';
-            const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
-        };
-
-        /* Build header */
-        document.getElementById('summaryTableHead').innerHTML =
-            activeCols.map(c =>
-                `<th style="padding:9px 8px;border:1px solid rgba(255,255,255,0.15);white-space:nowrap;font-size:0.75rem;font-weight:600;letter-spacing:0.3px;${c.center?'text-align:center;':''}">${c.label}</th>`
-            ).join('');
-
-        /* Cell renderer per column */
-        function renderCell(col, r, idx) {
-            const p = `padding:7px 8px;border:1px solid #e2e8f0;`;
-            const c = col.center ? 'text-align:center;' : '';
-            const w = `white-space:nowrap;`;
-
-            switch (col.special) {
-                case 'serial':
-                    return `<td style="${p}${c}${w}">${idx+1}</td>`;
-                case 'name':
-                    return `<td style="${p}font-weight:600;${w}">${r.STUDENT_NAME||'-'}</td>`;
-                case 'apaar':
-                    return `<td style="${p}${c}${w}">${r.APAAR
-                        ? `<span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;background:#eff6ff;color:#1e40af;">${r.APAAR}</span>`
-                        : '<span style="color:#94a3b8;font-size:0.75rem;">-</span>'}</td>`;
-                case 'orphan':
-                    return `<td style="${p}${c}${w}"><span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                        background:${r.ORPHAN==='Yes'?'#fef3c7':'#f0fdf4'};
-                        color:${r.ORPHAN==='Yes'?'#92400e':'#166534'};">${r.ORPHAN||'No'}</span></td>`;
-                case 'hostel':
-                    return `<td style="${p}${c}${w}"><span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                        background:${r.HOSTEL_STUDENT==='Yes'?'#eff6ff':'#f9fafb'};
-                        color:${r.HOSTEL_STUDENT==='Yes'?'#1e40af':'#6b7280'};">${r.HOSTEL_STUDENT==='Yes'?'Yes':'No'}</span></td>`;
-                case 'voc':
-                    return `<td style="${p}${c}${w}"><span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
-                        background:${r.VOC_STATUS==='Yes'?'#f0fdf4':'#f9fafb'};
-                        color:${r.VOC_STATUS==='Yes'?'#166534':'#6b7280'};">${r.VOC_STATUS||'No'}</span></td>`;
-                case 'address':
-                    return `<td style="${p}max-width:160px;white-space:normal;">${r.ADDRESS||'-'}</td>`;
-                default:
-                    const val = col.date ? fmtDate(r[col.key]) : (r[col.key]||'-');
-                    return `<td style="${p}${c}${w}">${val}</td>`;
-            }
-        }
-
-        const colCount = activeCols.length || 1;
         document.getElementById('classTableBody').innerHTML = rows.length
-            ? rows.map((r, i) =>
-                `<tr style="background:${i%2===0?'#fff':'#F8FAFF'};">${
-                    activeCols.map(c => renderCell(c, r, i)).join('')
-                }</tr>`).join('')
-            : `<tr><td colspan="${colCount}" style="text-align:center;padding:25px;color:#888;">No records match the selected filters.</td></tr>`;
-
-        /* Update min-width based on visible column count */
-        document.getElementById('summaryTable').style.minWidth =
-            Math.max(400, activeCols.length * 110) + 'px';
+            ? rows.map((r,i) => `
+                <tr style="background:${i%2===0?'#fff':'#F8FAFF'};">
+                    ${td(i+1,true)}
+                    ${td(r.CLASS,true)}
+                    ${td(r.DIVISION,true)}
+                    ${td(r.ROLL_NO,true)}
+                    ${td(r.GR_NO,true)}
+                    <td style="padding:7px 8px;border:1px solid #e2e8f0;font-weight:600;white-space:nowrap;">${r.STUDENT_NAME||'-'}</td>
+                    ${td(r.GENDER,true)}
+                    ${td(formatDate(r.DOB_LC),true)}
+                    ${td(r.CASTE,true)}
+                    ${td(r.FATHER_NAME)}
+                    ${td(r.MOTHER_NAME)}
+                    ${td(r.MOBILE_1,true)}
+                    ${td(r.MOBILE_2,true)}
+                    ${td(r.AADHAR_NO,true)}
+                    ${td(r.BLOOD_GROUP,true)}
+                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
+                        <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
+                            background:${r.ORPHAN==='Yes'?'#fef3c7':'#f0fdf4'};
+                            color:${r.ORPHAN==='Yes'?'#92400e':'#166534'};">
+                            ${r.ORPHAN||'No'}
+                        </span>
+                    </td>
+                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
+                        <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
+                            background:${r.HOSTEL_STUDENT==='Yes'?'#eff6ff':'#f9fafb'};
+                            color:${r.HOSTEL_STUDENT==='Yes'?'#1e40af':'#6b7280'};">
+                            ${r.HOSTEL_STUDENT==='Yes'?'Yes':'No'}
+                        </span>
+                    </td>
+                    ${td(r.APL_BPL,true)}
+                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">
+                        <span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;
+                            background:${r.VOC_STATUS==='Yes'?'#f0fdf4':'#f9fafb'};
+                            color:${r.VOC_STATUS==='Yes'?'#166534':'#6b7280'};">
+                            ${r.VOC_STATUS||'No'}
+                        </span>
+                    </td>
+                    ${td(r.VOC_NAME)}
+                    ${td(r.ACADEMIC_YEAR,true)}
+                    <td style="padding:7px 8px;border:1px solid #e2e8f0;max-width:160px;white-space:normal;">${r.ADDRESS||'-'}</td>
+                </tr>`).join('')
+            : `<tr><td colspan="22" style="text-align:center;padding:25px;color:#888;">No records match the selected filters.</td></tr>`;
 
         document.getElementById('tableCount').textContent =
-            `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''} · ${activeCols.length} column${activeCols.length!==1?'s':''} visible`;
-
-        /* Update picker badge count */
-        const badge = document.getElementById('cpCount');
-        if (badge) badge.textContent = `${visibleCols.size} / ${TABLE_COLS.length}`;
+            `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''}`;
+        updateSummaryStats();
     }
 
     /* ══════════════════════════════════════════════════════
@@ -2318,27 +2074,12 @@
     /* ══════════════════════════════════════════════════════
        EXPORT TO EXCEL (photos excluded to keep file small)
     ══════════════════════════════════════════════════════ */
-    async function exportToExcel() {
+    function exportToExcel() {
         if (!db.length) { showToast('No data to export!','#F59E0B'); return; }
-
-        showToast('⏳ Loading export module…', '#1E3A8A');
-        let XLSX;
-        try { XLSX = await loadXLSX(); }
-        catch(e) { showToast('❌ Export failed: could not load library','#EF4444'); return; }
-
-        // Date fields stored internally as YYYY-MM-DD — convert to DD/MM/YYYY for export
-        const DATE_FIELDS = ['DOA', 'DOB_LC', 'DOB_AADHAR'];
-        function fmtExportDate(v) {
-            if (!v) return '';
-            const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
-        }
-
+        const dateFields = ['DOA','DOB_LC','DOB_AADHAR'];
         const exportData = db.map(s => {
             const row = {};
-            FIELDS.forEach(f => {
-                row[f] = DATE_FIELDS.includes(f) ? fmtExportDate(s[f]) : (s[f]||'');
-            });
+            FIELDS.forEach(f => row[f] = dateFields.includes(f) ? formatDate(s[f]) : (s[f]||''));
             return row;
         });
         const ws = XLSX.utils.json_to_sheet(exportData);
@@ -2346,10 +2087,200 @@
         XLSX.utils.book_append_sheet(wb, ws, 'Students');
         XLSX.writeFile(wb, 'Student_Database_v1.0.xlsx');
     }
+
+    /* ══════════════════════════════════════════════════════
+       COLUMN SELECTOR — Print / Export with chosen columns
+    ══════════════════════════════════════════════════════ */
+    const COLUMN_MAP = [
+        { field: 'CLASS',           label: 'Class' },
+        { field: 'DIVISION',        label: 'Division' },
+        { field: 'ROLL_NO',         label: 'Roll No' },
+        { field: 'GR_NO',          label: 'GR No' },
+        { field: 'STUDENT_NAME',   label: 'Student Name' },
+        { field: 'GENDER',         label: 'Gender' },
+        { field: 'DOB_LC',         label: 'DOB' },
+        { field: 'CASTE',          label: 'Caste' },
+        { field: 'FATHER_NAME',    label: 'Father' },
+        { field: 'MOTHER_NAME',    label: 'Mother' },
+        { field: 'MOBILE_1',       label: 'Mobile 1' },
+        { field: 'MOBILE_2',       label: 'Mobile 2' },
+        { field: 'AADHAR_NO',      label: 'Aadhar' },
+        { field: 'BLOOD_GROUP',    label: 'Blood Grp' },
+        { field: 'ORPHAN',         label: 'Orphan' },
+        { field: 'HOSTEL_STUDENT', label: 'Hostel' },
+        { field: 'APL_BPL',        label: 'APL/BPL' },
+        { field: 'VOC_STATUS',     label: 'Vocational' },
+        { field: 'VOC_NAME',       label: 'Voc Subject' },
+        { field: 'ACADEMIC_YEAR',  label: 'Acad. Year' },
+        { field: 'ADDRESS',        label: 'Address' }
+    ];
+
+    function getFilteredRows() {
+        const fCls    = document.getElementById('tbl-class').value;
+        const fDiv    = document.getElementById('tbl-div').value;
+        const fYear   = document.getElementById('tbl-year').value;
+        const fGender = document.getElementById('tbl-gender').value;
+        const fVoc    = document.getElementById('tbl-voc').value;
+        const fOrphan = document.getElementById('tbl-orphan').value;
+        const fHostel = document.getElementById('tbl-hostel').value;
+        const fApl    = document.getElementById('tbl-aplbpl').value;
+
+        return db.filter(s => {
+            const hostelYes = s.HOSTEL_STUDENT === 'Yes';
+            if (fCls    && s.CLASS         !== fCls)    return false;
+            if (fDiv    && s.DIVISION       !== fDiv)    return false;
+            if (fYear   && s.ACADEMIC_YEAR !== fYear)   return false;
+            if (fGender && s.GENDER        !== fGender) return false;
+            if (fVoc    && s.VOC_STATUS    !== fVoc)    return false;
+            if (fOrphan && s.ORPHAN        !== fOrphan) return false;
+            if (fHostel && (fHostel === 'Yes') !== hostelYes) return false;
+            if (fApl    && s.APL_BPL       !== fApl)    return false;
+            return true;
+        });
+    }
+
+    let selectedCols = new Set(COLUMN_MAP.map(c => c.field));
+
+    function openColumnSelector() {
+        selectedCols = new Set(COLUMN_MAP.map(c => c.field));
+        renderColumnGrid();
+        document.getElementById('colModalSelectAll').checked = true;
+        document.getElementById('columnModal').style.display = 'flex';
+    }
+
+    function closeColumnSelector() {
+        document.getElementById('columnModal').style.display = 'none';
+    }
+
+    function renderColumnGrid() {
+        const grid = document.getElementById('colCheckboxGrid');
+        const checkSvg = `<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>`;
+        grid.innerHTML = COLUMN_MAP.map((col) => {
+            const isSelected = selectedCols.has(col.field);
+            return `
+                <div class="col-checkbox-item ${isSelected ? 'selected' : ''}" onclick="toggleCol('${col.field}')">
+                    <div class="check-box">${checkSvg}</div>
+                    <label>${col.label}</label>
+                </div>`;
+        }).join('');
+    }
+
+    function toggleCol(field) {
+        if (selectedCols.has(field)) {
+            selectedCols.delete(field);
+        } else {
+            selectedCols.add(field);
+        }
+        renderColumnGrid();
+        document.getElementById('colModalSelectAll').checked = selectedCols.size === COLUMN_MAP.length;
+    }
+
+    function toggleSelectAllColumns() {
+        const checked = document.getElementById('colModalSelectAll').checked;
+        if (checked) {
+            selectedCols = new Set(COLUMN_MAP.map(c => c.field));
+        } else {
+            selectedCols.clear();
+        }
+        renderColumnGrid();
+    }
+
+    function getSelectedColumns() {
+        return COLUMN_MAP.filter(c => selectedCols.has(c.field));
+    }
+
+    function printSelectedColumns() {
+        const cols = getSelectedColumns();
+        if (!cols.length) { showToast('Select at least one column!','#F59E0B'); return; }
+        const rows = getFilteredRows();
+        if (!rows.length) { showToast('No data to print!','#F59E0B'); return; }
+
+        const yearVal = document.getElementById('tbl-year').value;
+        const yearLabel = yearVal ? yearVal : 'All Years';
+
+        const thead = '<tr>' + cols.map(c => `<th>${c.label}</th>`).join('') + '</tr>';
+        const dateFields = ['DOA','DOB_LC','DOB_AADHAR'];
+        const tbody = rows.map((r, i) => {
+            return '<tr>' + cols.map(c => {
+                const val = dateFields.includes(c.field) ? formatDate(r[c.field]) : (r[c.field] || '-');
+                return `<td>${val}</td>`;
+            }).join('') + '</tr>';
+        }).join('');
+
+        const html = `
+            <h2>EduData - Student Summary</h2>
+            <p class="print-subtitle">Academic Year: ${yearLabel} | Total: ${rows.length} students | Printed: ${new Date().toLocaleDateString()}</p>
+            <table><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+            <div class="print-footer">Generated by EduData v2.0</div>
+        `;
+
+        document.getElementById('printSummaryArea').innerHTML = html;
+        closeColumnSelector();
+        setTimeout(() => window.print(), 100);
+    }
+
+    function exportSelectedColumns() {
+        const cols = getSelectedColumns();
+        if (!cols.length) { showToast('Select at least one column!','#F59E0B'); return; }
+        const rows = getFilteredRows();
+        if (!rows.length) { showToast('No data to export!','#F59E0B'); return; }
+
+        const dateFields = ['DOA','DOB_LC','DOB_AADHAR'];
+        const exportData = rows.map(r => {
+            const row = {};
+            cols.forEach(c => row[c.label] = dateFields.includes(c.field) ? formatDate(r[c.field]) : (r[c.field] || ''));
+            return row;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Students');
+        const yearVal = document.getElementById('tbl-year').value;
+        const fileName = yearVal ? `Student_Summary_${yearVal}.xlsx` : 'Student_Summary_AllYears.xlsx';
+        XLSX.writeFile(wb, fileName);
+        closeColumnSelector();
+        showToast('✅ Exported successfully!','#065F46');
+    }
+
+    /* ══════════════════════════════════════════════════════
+       ACADEMIC YEAR FILTER — syncs year filter card with table filter
+    ══════════════════════════════════════════════════════ */
+    function onYearFilterChange() {
+        const year = document.getElementById('summaryYearFilter').value;
+        document.getElementById('tbl-year').value = year;
+        updateSummaryStats();
+        renderClassTable();
+    }
+
+    function updateYearBadge() {
+        const year = document.getElementById('tbl-year').value;
+        const filtered = getFilteredRows();
+        document.getElementById('yearCountBadge').textContent = year ? `${year} — ${filtered.length}` : `All — ${filtered.length}`;
+        document.getElementById('summaryYearFilter').value = year;
+    }
+
+    function clearTableFilters() {
+        ['tbl-class','tbl-div','tbl-year','tbl-gender','tbl-voc','tbl-orphan','tbl-hostel','tbl-aplbpl']
+            .forEach(id => document.getElementById(id).value = '');
+        document.getElementById('summaryYearFilter').value = '';
+        updateSummaryStats();
+        renderClassTable();
+    }
+
 </script>
 
 
 
+<!-- PWA: Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator && !location.hostname.includes('claudeusercontent.com')) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.warn('SW registration failed:', err));
+        });
+    }
+</script>
 
 </body>
 </html>
