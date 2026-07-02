@@ -1267,7 +1267,10 @@
 <div id="main-content">
     <header>
         <h2>🎓 EduData</h2>
-        <span class="header-badge">v 2.0</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button onclick="downloadBackup()" title="Download JSON backup" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:5px 12px;border-radius:99px;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;"><i class="fa-solid fa-download"></i> Backup</button>
+            <span class="header-badge">v 2.0</span>
+        </div>
     </header>
 
     <!-- TAB BAR -->
@@ -1451,7 +1454,7 @@
             </div>
         </form>
     </div>
-    <p class="version-tag">Version 1.0 | Formal Border | 35 Fields + Vocational</p>
+    <p class="version-tag">Version 2.0 | 39 Fields</p>
 
     </div><!-- end #tab-form -->
 
@@ -1512,9 +1515,14 @@
                     <option>Male</option><option>Female</option>
                 </select>
                 <select id="tbl-voc"      onchange="renderClassTable()" class="filter-select">
-                    <option value="">Vocational: All</option>
-                    <option value="Yes">Vocational: Yes</option>
-                    <option value="No">Vocational: No</option>
+                    <option value="">Voc. Xth: All</option>
+                    <option value="Yes">Voc. Xth: Yes</option>
+                    <option value="No">Voc. Xth: No</option>
+                </select>
+                <select id="tbl-voc-current" onchange="renderClassTable()" class="filter-select">
+                    <option value="">Voc. Current: All</option>
+                    <option value="Yes">Voc. Current: Yes</option>
+                    <option value="No">Voc. Current: No</option>
                 </select>
                 <select id="tbl-orphan"   onchange="renderClassTable()" class="filter-select">
                     <option value="">Orphan: All</option>
@@ -1608,7 +1616,7 @@
                 <h3 id="d-orphan">0</h3><p>Orphan</p>
             </div>
             <div class="sstat kpi kpi-voc">
-                <h3 id="d-voc">0</h3><p>Vocational</p>
+                <h3 id="d-voc">0</h3><p>Voc. (Xth/CY)</p>
             </div>
             <div class="sstat kpi kpi-hostel">
                 <h3 id="d-hostel">0</h3><p>Hostel</p>
@@ -2118,6 +2126,10 @@
         const normFields = ['GENDER','HOSTEL_STUDENT','ORPHAN','VOC_STATUS','VOC_CURRENT_YR','CLASS','APL_BPL','BLOOD_GROUP','DIVISION','ACADEMIC_YEAR'];
         db = db.map(s => {
             const fixed = Object.assign({}, s);
+            // Ensure all FIELDS exist (default missing ones to '')
+            FIELDS.forEach(f => {
+                if (fixed[f] === undefined) { fixed[f] = ''; changed++; }
+            });
             normFields.forEach(f => {
                 const orig = fixed[f];
                 fixed[f] = normaliseDropdownValue(f, fixed[f]);
@@ -2125,7 +2137,7 @@
             });
             // Default empty yes/no fields to 'No'
             ['HOSTEL_STUDENT','ORPHAN','VOC_STATUS','VOC_CURRENT_YR'].forEach(f => {
-                if (!fixed[f]) fixed[f] = 'No';
+                if (fixed[f] === '') fixed[f] = 'No';
             });
             if (!fixed['APL_BPL']) fixed['APL_BPL'] = 'APL';
             return fixed;
@@ -2133,7 +2145,7 @@
 
         if (changed > 0) {
             localStorage.setItem('eduDB_v4_final', JSON.stringify(db));
-            console.log(`Fixed ${changed} dropdown values in existing data.`);
+            console.log(`Fixed ${changed} fields in existing data.`);
         }
     }
 
@@ -2172,6 +2184,7 @@
         const fYear   = document.getElementById('tbl-year').value;
         const fGender = document.getElementById('tbl-gender').value;
         const fVoc    = document.getElementById('tbl-voc').value;
+        const fVocCur = document.getElementById('tbl-voc-current').value;
         const fOrphan = document.getElementById('tbl-orphan').value;
         const fHostel = document.getElementById('tbl-hostel').value;
         const fApl    = document.getElementById('tbl-aplbpl').value;
@@ -2183,6 +2196,7 @@
             if (fYear   && s.ACADEMIC_YEAR !== fYear)   return false;
             if (fGender && s.GENDER        !== fGender) return false;
             if (fVoc    && s.VOC_STATUS    !== fVoc)    return false;
+            if (fVocCur && s.VOC_CURRENT_YR !== fVocCur) return false;
             if (fOrphan && s.ORPHAN        !== fOrphan) return false;
             if (fHostel && (fHostel==='Yes') !== hostelYes) return false;
             if (fApl    && s.APL_BPL       !== fApl)    return false;
@@ -2258,7 +2272,7 @@
         document.getElementById('d-boys').textContent   = db.filter(s=>s.GENDER==='Male').length;
         document.getElementById('d-girls').textContent  = db.filter(s=>s.GENDER==='Female').length;
         document.getElementById('d-orphan').textContent = db.filter(s=>s.ORPHAN==='Yes').length;
-        document.getElementById('d-voc').textContent    = db.filter(s=>s.VOC_STATUS==='Yes').length;
+        document.getElementById('d-voc').textContent    = db.filter(s=>s.VOC_STATUS==='Yes'||s.VOC_CURRENT_YR==='Yes').length;
         document.getElementById('d-hostel').textContent = db.filter(s=>s.HOSTEL_STUDENT==='Yes').length;
         document.getElementById('d-bpl').textContent    = db.filter(s=>s.APL_BPL==='BPL').length;
 
@@ -2320,6 +2334,10 @@
         const vocSubs = {};
         db.filter(s=>s.VOC_STATUS==='Yes'&&s.VOC_NAME).forEach(s=>{
             const k = s.VOC_NAME.trim().toUpperCase()||'UNKNOWN';
+            vocSubs[k] = (vocSubs[k]||0)+1;
+        });
+        db.filter(s=>s.VOC_CURRENT_YR==='Yes'&&s.VOC_NAME_CURRENT).forEach(s=>{
+            const k = s.VOC_NAME_CURRENT.trim().toUpperCase()||'UNKNOWN';
             vocSubs[k] = (vocSubs[k]||0)+1;
         });
         const vocEntries = Object.entries(vocSubs).sort((a,b)=>b[1]-a[1]);
@@ -2574,8 +2592,27 @@
         document.getElementById('summaryYearFilter').value = year;
     }
 
+    /* ══════════════════════════════════════════════════════
+       MANUAL JSON BACKUP DOWNLOAD
+    ══════════════════════════════════════════════════════ */
+    function downloadBackup() {
+        if (!db || !db.length) { showToast('No data to backup!','#F59E0B'); return; }
+        const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `EduData_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        showToast(`✅ Downloaded ${db.length} records as JSON`);
+    }
+    /* ══════════════════════════════════════════════════════
+       END BACKUP
+    ══════════════════════════════════════════════════════ */
+
     function clearTableFilters() {
-        ['tbl-class','tbl-div','tbl-year','tbl-gender','tbl-voc','tbl-orphan','tbl-hostel','tbl-aplbpl']
+        ['tbl-class','tbl-div','tbl-year','tbl-gender','tbl-voc','tbl-voc-current','tbl-orphan','tbl-hostel','tbl-aplbpl']
             .forEach(id => document.getElementById(id).value = '');
         document.getElementById('summaryYearFilter').value = '';
         updateSummaryStats();
