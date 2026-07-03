@@ -18,20 +18,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* ═══════════════════════════════════════════
-           DESIGN TOKENS
-        ═══════════════════════════════════════════ */
+        /* ---- */
         :root {
             --primary: #1A3FAB;
             --primary-dark: #122E82;
             --primary-light: #EEF2FF;
             --secondary: #059669;
-            --secondary-light: #ECFDF5;
-            --accent: #6366F1;
             --warning: #D97706;
-            --warning-light: #FFFBEB;
             --error: #DC2626;
-            --error-light: #FEF2F2;
             --surface: #FFFFFF;
             --bg: #F1F5FB;
             --border: #E2E8F0;
@@ -42,16 +36,45 @@
             --btn-export: #065F46;
             --btn-import: #0369A1;
             --btn-print:  #6D28D9;
+            --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
             --shadow-sm: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
             --shadow-md: 0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
             --shadow-lg: 0 10px 30px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.06);
+            --search-overlay: rgba(15,23,42,0.75);
+            --col-overlay: rgba(15,23,42,0.75);
+            --preview-overlay: rgba(15,23,42,0.85);
+            --row-alt: #F8FAFF;
         }
 
-        /* ═══════════════════════════════════════════
-           BASE
-        ═══════════════════════════════════════════ */
+        body.dark-mode {
+            --primary: #60A5FA;
+            --primary-dark: #1E40AF;
+            --primary-light: #1E293B;
+            --secondary: #34D399;
+            --warning: #FBBF24;
+            --error: #F87171;
+            --surface: #1E293B;
+            --bg: #0F172A;
+            --border: #334155;
+            --border-strong: #475569;
+            --text-primary: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-muted: #64748B;
+            --btn-export: #059669;
+            --btn-import: #0284C7;
+            --btn-print:  #7C3AED;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.3);
+            --search-overlay: rgba(0,0,0,0.85);
+            --col-overlay: rgba(0,0,0,0.85);
+            --preview-overlay: rgba(0,0,0,0.9);
+            --row-alt: rgba(255,255,255,0.03);
+        }
+
+        /* ---- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
@@ -63,9 +86,7 @@
             min-height: 100vh;
         }
 
-        /* ═══════════════════════════════════════════
-           HEADER
-        ═══════════════════════════════════════════ */
+        /* ---- */
         header {
             width: 100%;
             max-width: 680px;
@@ -88,6 +109,21 @@
             letter-spacing: -0.3px;
         }
 
+                header .header-btn {
+            background:rgba(255,255,255,0.12);
+            border:1px solid rgba(255,255,255,0.2);
+            color:#fff;
+            padding:5px 12px;
+            border-radius:99px;
+            font-size:0.7rem;
+            font-weight:600;
+            cursor:pointer;
+            font-family:'DM Sans',sans-serif;
+            white-space:nowrap;
+            width:auto;
+            min-height:0;
+            display:inline-flex;
+        }
         header .header-badge {
             background: rgba(255,255,255,0.18);
             color: #C7D7FF;
@@ -99,9 +135,7 @@
             text-transform: uppercase;
         }
 
-        /* ═══════════════════════════════════════════
-           CARDS
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .card {
             background: var(--surface);
             width: 100%;
@@ -113,9 +147,7 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* ═══════════════════════════════════════════
-           PHOTO UPLOAD
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .photo-container {
             display: flex;
             flex-direction: column;
@@ -160,9 +192,38 @@
 
         .btn-photo:hover { background: var(--text-primary); }
 
-        /* ═══════════════════════════════════════════
-           SECTION TITLES
-        ═══════════════════════════════════════════ */
+        .photo-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .photo-actions .btn-photo-action {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: opacity 0.15s, transform 0.12s;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .photo-actions .btn-photo-action:active { transform: scale(0.98); }
+        .photo-actions .btn-search-action { background: var(--primary); box-shadow: 0 2px 8px rgba(26,63,171,0.25); }
+        .photo-actions .btn-edit-action   { background: var(--warning); box-shadow: 0 2px 8px rgba(217,119,6,0.25); }
+        .photo-actions .btn-delete-action { background: var(--error); box-shadow: 0 2px 8px rgba(220,38,38,0.20); }
+        .photo-actions .btn-photo-action:hover { opacity: 0.92; }
+
+        /* ---- */
         .section-title {
             font-family: 'Sora', sans-serif;
             font-weight: 700;
@@ -171,9 +232,7 @@
             text-transform: uppercase;
         }
 
-        /* ═══════════════════════════════════════════
-           FORM FIELDS
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .field-group { margin-bottom: 12px; }
 
         label {
@@ -222,9 +281,7 @@
             margin-left: 2px;
         }
 
-        /* ═══════════════════════════════════════════
-           FORM GRID
-        ═══════════════════════════════════════════ */
+        /* ---- */
         #studentForm { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
         #studentForm .btn-stack { grid-column: 1/-1; }
         #studentForm .field-group.full { grid-column: 1/-1; }
@@ -235,7 +292,7 @@
             border-radius: 14px;
             margin-bottom: 18px;
             overflow: hidden;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border);
             box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
@@ -247,7 +304,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(0,0,0,0.06);
+            border-bottom: 1px solid var(--border);
             font-size: 0.72rem;
         }
 
@@ -301,9 +358,20 @@
         .section-vocational { background: #F0F9FF; }
         .section-vocational .section-title { color: #0C4A6E; background: #E0F2FE; }
 
-        /* ═══════════════════════════════════════════
-           BUTTONS
-        ═══════════════════════════════════════════ */
+        body.dark-mode .section-academic { background: #0F1A2E; }
+        body.dark-mode .section-academic .section-title { color: #93C5FD; background: #1E3A5F; }
+        body.dark-mode .section-personal { background: #1E1B2E; }
+        body.dark-mode .section-personal .section-title { color: #C4B5FD; background: #3B2F6E; }
+        body.dark-mode .section-contact { background: #0F2A1E; }
+        body.dark-mode .section-contact .section-title { color: #6EE7B7; background: #1E4A3F; }
+        body.dark-mode .section-govt { background: #2A2410; }
+        body.dark-mode .section-govt .section-title { color: #FCD34D; background: #5A4A1E; }
+        body.dark-mode .section-medical { background: #2A1418; }
+        body.dark-mode .section-medical .section-title { color: #FDA4AF; background: #5A1A28; }
+        body.dark-mode .section-vocational { background: #0F1A2E; }
+        body.dark-mode .section-vocational .section-title { color: #7DD3FC; background: #1E3A5F; }
+
+        /* ---- */
         .btn-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
 
         button {
@@ -333,9 +401,7 @@
         .btn-update { background: var(--warning); box-shadow: 0 2px 8px rgba(217,119,6,0.25); display: none; }
         .btn-clear  { background: var(--error); box-shadow: 0 2px 8px rgba(220,38,38,0.20); }
 
-        /* ═══════════════════════════════════════════
-           QUICK STATS (top of form tab)
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .dashboard {
             display: flex;
             gap: 10px;
@@ -371,9 +437,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* ═══════════════════════════════════════════
-           TAB BAR
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .tab-bar {
             display: flex;
             max-width: 680px;
@@ -419,9 +483,7 @@
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
-        /* ═══════════════════════════════════════════
-           SUMMARY & DASHBOARD SHARED
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .summary-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
@@ -479,23 +541,19 @@
             letter-spacing: 0.5px;
         }
 
-        /* ═══════════════════════════════════════════
-           MINI BAR CHARTS (Dashboard)
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .d-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
         .d-bar-label { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); min-width: 40px; text-align: right; }
         .d-bar-track { flex: 1; background: var(--bg); border-radius: 99px; height: 12px; overflow: hidden; border: 1px solid var(--border); }
         .d-bar-fill  { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
         .d-bar-count { font-size: 0.72rem; font-weight: 700; color: var(--primary); min-width: 26px; }
 
-        /* ═══════════════════════════════════════════
-           MODAL
-        ═══════════════════════════════════════════ */
+        /* ---- */
         #searchModal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15,23,42,0.75);
+            background: var(--search-overlay);
             backdrop-filter: blur(4px);
             z-index: 1000;
             padding: 15px;
@@ -528,7 +586,6 @@
             padding: 14px;
             border-radius: var(--radius-md);
             margin-bottom: 10px;
-            border-left: 4px solid var(--primary);
             border: 1px solid var(--border);
             border-left: 4px solid var(--primary);
         }
@@ -538,9 +595,7 @@
             font-size: 0.9rem;
         }
 
-        /* ═══════════════════════════════════════════
-           TOAST
-        ═══════════════════════════════════════════ */
+        /* ---- */
         #toast {
             position: fixed;
             bottom: 24px;
@@ -557,9 +612,7 @@
             box-shadow: var(--shadow-lg);
         }
 
-        /* ═══════════════════════════════════════════
-           VERSION TAG
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .version-tag {
             text-align: center;
             font-size: 0.68rem;
@@ -568,9 +621,7 @@
             letter-spacing: 0.3px;
         }
 
-        /* ═══════════════════════════════════════════
-           FILTER SELECTS (Summary tab)
-        ═══════════════════════════════════════════ */
+        /* ---- */
         .filter-row {
             display: flex;
             flex-wrap: wrap;
@@ -616,9 +667,7 @@
             color: var(--text-primary);
         }
 
-        /* ═══════════════════════════════════════════
-           FORM TAB BACKGROUND GRADIENT
-        ═══════════════════════════════════════════ */
+        /* ---- */
         #tab-form {
             background: linear-gradient(160deg, #EEF2FF 0%, #E0F2FE 40%, #ECFDF5 100%);
             border-radius: var(--radius-lg);
@@ -627,9 +676,11 @@
             max-width: 100%;
         }
 
-        /* ═══════════════════════════════════════════
-           SUMMARY TAB — scoped stats (override global .sstat)
-        ═══════════════════════════════════════════ */
+        body.dark-mode #tab-form {
+            background: linear-gradient(160deg, #0F172A 0%, #1E1B2E 40%, #0F2A1E 100%);
+        }
+
+        /* ---- */
         #tab-summary .summary-stats {
             display: flex;
             gap: 10px;
@@ -678,9 +729,7 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* ═══════════════════════════════════════════
-           DASHBOARD TAB — scoped stats + KPI cards
-        ═══════════════════════════════════════════ */
+        /* ---- */
         #tab-dashboard .summary-stats {
             display: flex;
             gap: 10px;
@@ -780,14 +829,12 @@
             font-weight: 500;
         }
 
-        /* ═══════════════════════════════════════════
-           COLUMN SELECTOR MODAL
-        ═══════════════════════════════════════════ */
+        /* ---- */
         #columnModal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15,23,42,0.75);
+            background: var(--col-overlay);
             backdrop-filter: blur(4px);
             z-index: 1000;
             padding: 15px;
@@ -938,7 +985,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15,23,42,0.85);
+            background: var(--preview-overlay);
             backdrop-filter: blur(6px);
             z-index: 1100;
             padding: 15px;
@@ -1026,11 +1073,11 @@
 
         .preview-body td {
             padding: 7px 10px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border);
             white-space: nowrap;
         }
 
-        .preview-body tr:nth-child(even) { background: #F8FAFF; }
+        .preview-body tr:nth-child(even) { background: var(--row-alt); }
 
         .preview-body .preview-count {
             margin: 0 0 12px 0;
@@ -1088,6 +1135,76 @@
             padding: 6px 12px;
             border-radius: 99px;
         }
+
+        /* ---- */
+        .tbl-cell { padding:7px 8px; border:1px solid var(--border); white-space:nowrap; }
+        .tbl-center { text-align:center; }
+        .tbl-cell-long { max-width:140px; white-space:normal; }
+        .tbl-name { font-weight:600; border:1px solid var(--border); }
+        .tbl-empty { text-align:center; padding:25px; color:var(--text-muted); }
+        .row-even { background: var(--surface); }
+        .row-odd { background: var(--row-alt); }
+        .search-empty { color:#888; text-align:center; padding:20px; }
+        .voc-empty { color:#888; font-size:0.8rem; text-align:center; padding:10px 0; }
+        .dash-cell { padding:10px 8px; border:1px solid var(--border); }
+        .dash-class { font-weight:800; font-size:1rem; }
+        .dash-center { text-align:center; }
+        .dash-bold { font-weight:700; }
+        .badge { padding:2px 8px; border-radius:99px; font-size:0.75rem; font-weight:700; display:inline-block; }
+        .badge-orphan-yes { background:#fef3c7; color:#92400e; }
+        .badge-orphan-no { background:#f0fdf4; color:#166534; }
+        .badge-hostel-yes { background:#eff6ff; color:#1e40af; }
+        .badge-hostel-no { background:#f9fafb; color:#6b7280; }
+        .badge-voc-yes { background:#f0fdf4; color:#166534; }
+        .badge-voc-no { background:#f9fafb; color:#6b7280; }
+
+        /* ---- */
+        body.dark-mode select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        }
+        body.dark-mode .tbl-cell { border-color: var(--border) !important; }
+        body.dark-mode .tbl-name { border-color: var(--border) !important; }
+        body.dark-mode .tbl-empty { color: var(--text-muted) !important; }
+        body.dark-mode .search-empty { color: var(--text-muted); }
+        body.dark-mode .voc-empty { color: var(--text-muted); }
+        body.dark-mode .dash-cell { border-color: var(--border) !important; }
+        body.dark-mode .badge-orphan-yes { background: #451A03 !important; color: #FCD34D !important; }
+        body.dark-mode .badge-orphan-no { background: #064E3B !important; color: #6EE7B7 !important; }
+        body.dark-mode .badge-hostel-yes { background: #1E3A5F !important; color: #93C5FD !important; }
+        body.dark-mode .badge-hostel-no { background: #1E293B !important; color: #94A3B8 !important; }
+        body.dark-mode .badge-voc-yes { background: #064E3B !important; color: #6EE7B7 !important; }
+        body.dark-mode .badge-voc-no { background: #1E293B !important; color: #94A3B8 !important; }
+        body.dark-mode .year-filter-card { background: linear-gradient(135deg, #0F172A, #1E293B); }
+        body.dark-mode .year-filter-card select { background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+        body.dark-mode .year-filter-card select option { color: var(--text-primary); background: var(--surface); }
+        body.dark-mode .year-filter-card label { color: #94A3B8; }
+        body.dark-mode .year-filter-card .year-count { background: rgba(255,255,255,0.1); }
+
+        body.dark-mode #summaryTable thead tr { background: var(--primary-dark); }
+        body.dark-mode .preview-body th { background: var(--primary-dark); }
+        body.dark-mode .print-subtitle { color: #94A3B8 !important; }
+        body.dark-mode .d-bar-fill { opacity: 0.9; }
+
+        body.dark-mode .kpi-boys    { background: linear-gradient(135deg, #0C4A6E, #0EA5E9) !important; }
+        body.dark-mode .kpi-girls   { background: linear-gradient(135deg, #831843, #EC4899) !important; }
+        body.dark-mode .kpi-orphan  { background: linear-gradient(135deg, #78350F, #F59E0B) !important; }
+        body.dark-mode .kpi-voc     { background: linear-gradient(135deg, #064E3B, #10B981) !important; }
+        body.dark-mode .kpi-hostel  { background: linear-gradient(135deg, #4C1D95, #8B5CF6) !important; }
+        body.dark-mode .kpi-bpl     { background: linear-gradient(135deg, #7F1D1D, #EF4444) !important; }
+
+        body.dark-mode .filter-clear-btn { background: var(--text-muted); }
+        body.dark-mode .btn-photo { background: var(--text-muted); }
+        body.dark-mode .btn-photo:hover { background: var(--text-secondary); }
+
+        body.dark-mode #columnModal .col-checkbox-item { background: var(--bg); border-color: var(--border); }
+        body.dark-mode #columnModal .col-checkbox-item:hover { background: var(--primary-light); }
+        body.dark-mode #columnModal .col-checkbox-item.selected { background: var(--primary-light); }
+        body.dark-mode #columnModal .col-checkbox-item .check-box { background: var(--surface); border-color: var(--border-strong); }
+        body.dark-mode #columnModal .col-checkbox-item.selected .check-box { background: var(--primary); border-color: var(--primary); }
+        body.dark-mode #columnModal .col-checkbox-item label { color: var(--text-secondary); }
+        body.dark-mode #columnModal .col-checkbox-item.selected label { color: var(--primary); }
+        body.dark-mode #columnModal .col-select-all-row { border-bottom-color: var(--border); }
+        body.dark-mode #columnModal .col-select-all-row label { color: var(--text-primary); }
 
         /* Print summary table styles */
         @media print {
@@ -1148,14 +1265,7 @@
         #printSummaryArea { display: none; }
 
 
-        /* ═══════════════════════════════════════════════
-           PRINT STYLES
-           KEY: Use "body > *:not(#printArea) { display:none }"
-           instead of visibility:hidden — this removes elements
-           from document flow so browser doesn't create blank pages.
-           Each student is one .print-page div (normal flow),
-           page-break-after:always handles pagination.
-        ═══════════════════════════════════════════════ */
+        /* ---- */
         #printArea { display:none; }
 
         @media print {
@@ -1264,11 +1374,12 @@
 </head>
 <body>
 
-<div id="main-content">
+<div>
     <header>
         <h2>🎓 EduData</h2>
-        <div style="display:flex;align-items:center;gap:8px;">
-            <button onclick="downloadBackup()" title="Download JSON backup" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:5px 12px;border-radius:99px;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;"><i class="fa-solid fa-download"></i> Backup</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <button class="header-btn" onclick="toggleDarkMode()" id="darkModeToggle" title="Toggle dark/light mode" style="padding:5px 10px;"><i class="fa-solid fa-moon"></i></button>
+            <button class="header-btn" onclick="downloadBackup()" title="Download JSON backup"><i class="fa-solid fa-download"></i> Backup</button>
             <span class="header-badge">v 2.0</span>
         </div>
     </header>
@@ -1286,7 +1397,7 @@
         </button>
     </div>
 
-    <!-- ═══════ TAB 1: STUDENT DATA FORM ═══════ -->
+    <!-- tab -->
     <div class="tab-panel active" id="tab-form">
 
     <div class="dashboard">
@@ -1296,6 +1407,11 @@
     </div>
 
     <div class="card">
+        <div class="photo-actions">
+            <button type="button" class="btn-photo-action btn-search-action" onclick="openSearch()"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+            <button type="button" class="btn-photo-action btn-edit-action" onclick="openSearch()"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button type="button" class="btn-photo-action btn-delete-action" onclick="openSearch()"><i class="fa-solid fa-trash"></i> Delete</button>
+        </div>
         <div class="photo-container">
             <div id="photo-preview"><span>3.5 x 4.5 cm Photo<br>Required</span></div>
             <div style="display:flex;gap:10px;">
@@ -1458,7 +1574,7 @@
 
     </div><!-- end #tab-form -->
 
-    <!-- ═══════ TAB 2: SUMMARY ═══════ -->
+    <!-- tab -->
     <div class="tab-panel" id="tab-summary">
 
         <!-- Academic Year Filter Card -->
@@ -1598,7 +1714,7 @@
 
     </div><!-- end #tab-summary -->
 
-    <!-- ═══════ TAB 3: DASHBOARD ═══════ -->
+    <!-- tab -->
     <div class="tab-panel" id="tab-dashboard">
 
         <!-- Row 1: Top KPI cards -->
@@ -1863,6 +1979,20 @@
         document.getElementById('saveBtn').style.display   = 'flex';
         document.getElementById('updateBtn').style.display = 'none';
     }
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('eduDarkMode', isDark ? '1' : '0');
+        document.getElementById('darkModeToggle').innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        document.querySelector('meta[name="theme-color"]').content = isDark ? '#0F172A' : '#1E3A8A';
+    }
+    (function() {
+        if (localStorage.getItem('eduDarkMode') === '1') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeToggle').innerHTML = '<i class="fa-solid fa-sun"></i>';
+            document.querySelector('meta[name="theme-color"]').content = '#0F172A';
+        }
+    })();
     function openSearch()  { document.getElementById('searchModal').style.display = 'flex'; performSearch(); }
     function closeSearch() { document.getElementById('searchModal').style.display = 'none'; }
     function performSearch() {
@@ -1883,7 +2013,7 @@
                     <button style="flex:1;background:var(--error);color:white;border:none;padding:8px;border-radius:5px;" onclick="handleDelete(${r.id})">Del</button>
                 </div>
             </div>
-        `).join('') || '<p style="color:#888;text-align:center;padding:20px;">No records found.</p>';
+        `).join('') || '<p class="search-empty">No records found.</p>';
     }
     function startEdit(id) {
         const s = db.find(x => x.id === id);
@@ -1948,15 +2078,7 @@
         }
     }
 
-    /* ══════════════════════════════════════════════════════
-       BUILD ONE STUDENT'S PRINT PAGE HTML
-       addBreak = true  → adds .print-page-break (page-break-after:always)
-                          used for every page EXCEPT the last one
-       addBreak = false → NO page-break-after at all
-                          used for the last (or only) page
-       This JS-controlled approach is the only reliable way
-       to prevent a blank trailing page across all browsers.
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function buildStudentPageHTML(s, addBreak) {
         const academicYear = s.ACADEMIC_YEAR || '-';
         const numRows      = Math.ceil(FIELDS.length / 3);
@@ -1992,10 +2114,7 @@
         </div>`;
     }
 
-    /* ══════════════════════════════════════════════════════
-       PRINT SINGLE STUDENT
-       addBreak = false → only one page, no break needed
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function printRecord(id) {
         const s = db.find(x => x.id === id);
         if (!s) { showToast('Record not found','#EF4444'); return; }
@@ -2003,12 +2122,7 @@
         setTimeout(() => window.print(), 100);
     }
 
-    /* ══════════════════════════════════════════════════════
-       PRINT ALL STUDENTS — one A4 page per student
-       Every page except the LAST gets addBreak=true.
-       The last page gets addBreak=false → no page-break-after
-       → guaranteed no blank trailing page.
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function printAll() {
         if (!db.length) { showToast('No records to print!','#F59E0B'); return; }
         if (!confirm(`Print ALL ${db.length} student form(s)?\nThis may take a moment for large batches.`)) return;
@@ -2020,14 +2134,7 @@
         }, 300);
     }
 
-    /* ══════════════════════════════════════════════════════
-       FIX 3: IMPORT EXCEL / CSV
-       - Accepts .xlsx, .xls, .csv
-       - Maps columns by normalised name (case-insensitive,
-         spaces/underscores ignored): "Student Name" → STUDENT_NAME
-       - Date cells are auto-converted to YYYY-MM-DD strings
-       - Existing records are preserved; imported rows are appended
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function importExcel() {
         document.getElementById('importFileInput').click();
     }
@@ -2036,10 +2143,6 @@
         const file = event.target.files[0];
         if (!file) return;
         event.target.value = '';
-
-        function normaliseDropdown(field, raw) {
-            return normaliseDropdownValue(field, raw);
-        }
 
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -2082,7 +2185,7 @@
                         }
 
                         /* Normalise dropdown values to exact app-expected strings */
-                        val = normaliseDropdown(mapped, val);
+                        val = normaliseDropdownValue(mapped, val);
 
                         record[mapped] = val;
                         if (val) hasData = true;
@@ -2116,11 +2219,7 @@
         reader.readAsArrayBuffer(file);
     }
 
-    /* ══════════════════════════════════════════════════════
-       FIX EXISTING DATA — normalise dropdown values in db
-       Useful for records already imported before this fix.
-       Runs automatically on every page load.
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function fixExistingData() {
         let changed = 0;
         const normFields = ['GENDER','HOSTEL_STUDENT','ORPHAN','VOC_STATUS','VOC_CURRENT_YR','CLASS','APL_BPL','BLOOD_GROUP','DIVISION','ACADEMIC_YEAR'];
@@ -2149,9 +2248,7 @@
         }
     }
 
-    /* ══════════════════════════════════════════════════════
-       TAB SWITCHING — 3 tabs
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function switchTab(n) {
         [1,2,3].forEach(i => {
             const ids = {1:'tab-form',2:'tab-summary',3:'tab-dashboard'};
@@ -2162,9 +2259,7 @@
         if (n === 3) { renderDashboard(); }
     }
 
-    /* ══════════════════════════════════════════════════════
-       SUMMARY TAB — quick stats
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function updateSummaryStats() {
         const filtered = getFilteredRows();
         document.getElementById('s-total').textContent  = filtered.length;
@@ -2204,21 +2299,21 @@
         });
 
         const td = (val, center) =>
-            `<td style="padding:7px 8px;border:1px solid #e2e8f0;white-space:nowrap;${center?'text-align:center;':''}">${val||'-'}</td>`;
+            `<td class="tbl-cell ${center?'tbl-center':''}">${val||'-'}</td>`;
         const tdL = (val) =>
-            `<td style="padding:7px 8px;border:1px solid #e2e8f0;max-width:140px;white-space:normal;">${val||'-'}</td>`;
-        const badge = (val, yesBg, noBg, yesColor, noColor) =>
-            `<span style="padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:700;background:${val==='Yes'?yesBg:noBg};color:${val==='Yes'?yesColor:noColor};">${val||'No'}</span>`;
+            `<td class="tbl-cell tbl-cell-long">${val||'-'}</td>`;
+        const badge = (val, cls) =>
+            `<span class="badge badge-${cls}-${val==='Yes'?'yes':'no'}">${val||'No'}</span>`;
 
         document.getElementById('classTableBody').innerHTML = rows.length
             ? rows.map((r,i) => `
-                <tr style="background:${i%2===0?'#fff':'#F8FAFF'};">
+                <tr class="${i%2===0?'row-even':'row-odd'}">
                     ${td(i+1,true)}
                     ${td(r.CLASS,true)}
                     ${td(r.DIVISION,true)}
                     ${td(r.ROLL_NO,true)}
                     ${td(r.GR_NO,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;font-weight:600;white-space:nowrap;">${r.STUDENT_NAME||'-'}</td>
+                    <td class="tbl-cell tbl-name">${r.STUDENT_NAME||'-'}</td>
                     ${td(formatDate(r.DOA),true)}
                     ${td(r.PREV_SCHOOL)}
                     ${td(r.GENDER,true)}
@@ -2244,26 +2339,24 @@
                     ${td(r.WEIGHT,true)}
                     ${td(r.PERCENTAGE,true)}
                     ${td(r.DISTANCE,true)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">${badge(r.ORPHAN,'#fef3c7','#f0fdf4','#92400e','#166534')}</td>
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">${badge(r.HOSTEL_STUDENT,'#eff6ff','#f9fafb','#1e40af','#6b7280')}</td>
+                    <td class="tbl-cell tbl-center">${badge(r.ORPHAN,'orphan')}</td>
+                    <td class="tbl-cell tbl-center">${badge(r.HOSTEL_STUDENT,'hostel')}</td>
                     ${td(r.APL_BPL,true)}
                     ${tdL(r.REMARK)}
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">${badge(r.VOC_STATUS,'#f0fdf4','#f9fafb','#166534','#6b7280')}</td>
-                    <td style="padding:7px 8px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">${badge(r.VOC_CURRENT_YR,'#f0fdf4','#f9fafb','#166534','#6b7280')}</td>
+                    <td class="tbl-cell tbl-center">${badge(r.VOC_STATUS,'voc')}</td>
+                    <td class="tbl-cell tbl-center">${badge(r.VOC_CURRENT_YR,'voc')}</td>
                     ${td(r.VOC_NAME)}
                     ${td(r.VOC_NAME_CURRENT)}
                     ${td(r.ACADEMIC_YEAR,true)}
                 </tr>`).join('')
-            : `<tr><td colspan="40" style="text-align:center;padding:25px;color:#888;">No records match the selected filters.</td></tr>`;
+            : `<tr><td colspan="40" class="tbl-empty">No records match the selected filters.</td></tr>`;
 
         document.getElementById('tableCount').textContent =
             `Showing ${rows.length} of ${db.length} total student${db.length!==1?'s':''}`;
         updateSummaryStats();
     }
 
-    /* ══════════════════════════════════════════════════════
-       DASHBOARD TAB
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function renderDashboard() {
         const total = db.length;
 
@@ -2289,18 +2382,18 @@
                 const hostel = sub.filter(s=>s.HOSTEL_STUDENT==='Yes').length;
                 const bpl    = sub.filter(s=>s.APL_BPL==='BPL').length;
                 if (!sub.length) return '';
-                return `<tr style="background:${ci%2===0?'#fff':'#f8faff'};">
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;font-weight:800;color:${clsColors[ci]};font-size:1rem;">Class ${cls}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;font-weight:700;">${sub.length}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;color:#0369a1;font-weight:700;">${boys}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;color:#be185d;font-weight:700;">${girls}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;">${orphan}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;">${voc}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;">${hostel}</td>
-                    <td style="padding:10px 8px;border:1px solid #e2e8f0;text-align:center;">${bpl}</td>
+                return `<tr class="${ci%2===0?'row-even':'row-odd'}">
+                    <td class="dash-cell dash-class" style="color:${clsColors[ci]}">Class ${cls}</td>
+                    <td class="dash-cell dash-center dash-bold">${sub.length}</td>
+                    <td class="dash-cell dash-center dash-bold" style="color:#0369a1">${boys}</td>
+                    <td class="dash-cell dash-center dash-bold" style="color:#be185d">${girls}</td>
+                    <td class="dash-cell dash-center">${orphan}</td>
+                    <td class="dash-cell dash-center">${voc}</td>
+                    <td class="dash-cell dash-center">${hostel}</td>
+                    <td class="dash-cell dash-center">${bpl}</td>
                 </tr>`;
             }).join('') ||
-            `<tr><td colspan="8" style="text-align:center;padding:20px;color:#888;">No records yet.</td></tr>`;
+            `<tr><td colspan="8" class="tbl-empty">No records yet.</td></tr>`;
 
         // Blood group mini bars
         const bloods = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
@@ -2350,12 +2443,10 @@
                     <div class="d-bar-track"><div class="d-bar-fill" style="width:${Math.round(cnt/vsMax*100)}%;background:${vsColors[i%6]};"></div></div>
                     <span class="d-bar-count">${cnt}</span>
                 </div>`).join('')
-            : '<p style="color:#888;font-size:0.8rem;text-align:center;padding:10px 0;">No vocational students yet.</p>';
+            : '<p class="voc-empty">No vocational students yet.</p>';
     }
 
-    /* ══════════════════════════════════════════════════════
-       EXPORT TO EXCEL (photos excluded to keep file small)
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function exportToExcel() {
         if (!db.length) { showToast('No data to export!','#F59E0B'); return; }
         const dateFields = ['DOA','DOB_LC','DOB_AADHAR'];
@@ -2370,9 +2461,7 @@
         XLSX.writeFile(wb, 'Student_Database_v1.0.xlsx');
     }
 
-    /* ══════════════════════════════════════════════════════
-       COLUMN SELECTOR — Print / Export with chosen columns
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     const COLUMN_MAP = [
         { field: 'CLASS',           label: 'Class' },
         { field: 'DIVISION',        label: 'Division' },
@@ -2575,9 +2664,7 @@
         showToast('✅ Exported successfully!','#065F46');
     }
 
-    /* ══════════════════════════════════════════════════════
-       ACADEMIC YEAR FILTER — syncs year filter card with table filter
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function onYearFilterChange() {
         const year = document.getElementById('summaryYearFilter').value;
         document.getElementById('tbl-year').value = year;
@@ -2592,9 +2679,7 @@
         document.getElementById('summaryYearFilter').value = year;
     }
 
-    /* ══════════════════════════════════════════════════════
-       MANUAL JSON BACKUP DOWNLOAD
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
     function downloadBackup() {
         if (!db || !db.length) { showToast('No data to backup!','#F59E0B'); return; }
         const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
@@ -2607,9 +2692,7 @@
         URL.revokeObjectURL(a.href);
         showToast(`✅ Downloaded ${db.length} records as JSON`);
     }
-    /* ══════════════════════════════════════════════════════
-       END BACKUP
-    ══════════════════════════════════════════════════════ */
+    /* ---- */
 
     function clearTableFilters() {
         ['tbl-class','tbl-div','tbl-year','tbl-gender','tbl-voc','tbl-voc-current','tbl-orphan','tbl-hostel','tbl-aplbpl']
